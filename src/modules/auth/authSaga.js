@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects";
-import { loginAPI, refreshTokenAPI , logoutAPI, } from "./authAPI";
+import { loginAPI, refreshTokenAPI , logoutAPI,  getCsrfToken, } from "./authAPI";
 import {
   loginRequest,
   loginSuccess,
@@ -20,7 +20,7 @@ function* handleLogin(action) {
 
     const decryptedData = decryptData(response.data.payload);
 
-    console.log("Decrypted Login Response:", decryptedData);
+    // console.log("Decrypted Login Response:", decryptedData);
 
     const { user, access_token, csrf_token } = decryptedData.data;
 
@@ -38,10 +38,9 @@ function* handleLogin(action) {
       })
     );
 
-    console.log("Login Success - Tokens stored");
 
   } catch (error) {
-    console.error("Login Error:", error);
+    // console.error("Login Error:", error);
 
     yield put(
       loginFailure(
@@ -71,7 +70,7 @@ function* handleRefresh() {
     );
 
   } catch (error) {
-    tokenService.clearTokens();
+    // tokenService.clearTokens();
 
     yield put(refreshFailure());
   }
@@ -83,6 +82,15 @@ function* handleLogout() {
     yield call(logoutAPI);
 
     tokenService.clearTokens();
+
+    // Get a fresh CSRF token for the next login
+    const response = yield call(getCsrfToken);
+
+    const decryptedData = decryptData(response.data.payload);
+
+    const newCsrfToken = decryptedData.data.csrf_token;
+
+    tokenService.setCsrfToken(newCsrfToken);
 
     yield put(logoutSuccess());
 

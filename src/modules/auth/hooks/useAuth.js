@@ -7,13 +7,14 @@ import {
 const useAuth = () => {
   const dispatch = useDispatch();
 
-  const {
-    user,
-    accessToken,
-    isAuthenticated,
-    loading,
-    error,
-  } = useSelector((state) => state.auth);
+const {
+  user,
+  accessToken,
+  isAuthenticated,
+  loading,
+  error,
+  initialized,
+} = useSelector((state) => state.auth);
 
   const login = (loginData) => {
     dispatch(loginRequest(loginData));
@@ -23,15 +24,16 @@ const logoutUser = () => {
   dispatch(logoutRequest());
 };
 
-  return {
-    user,
-    accessToken,
-    isAuthenticated,
-    loading,
-    error,
-    login,
-    logoutUser,
-  };
+return {
+  user,
+  accessToken,
+  isAuthenticated,
+  loading,
+  error,
+  initialized,
+  login,
+  logoutUser,
+};
 };
 
 export default useAuth;
