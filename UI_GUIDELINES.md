@@ -33,8 +33,9 @@ Do not create duplicate versions of these components inside module folders.
 
 ## Styling
 
-- Use styled-components.
-- Use values from the existing theme.
+- Use styled-components for common reusable components.
+- Module-specific pages can use normal CSS or CSS Modules.
+- Use values from the existing theme where applicable.
 - Do not create separate color systems for individual modules.
 - Keep the existing Header and Sidebar consistent.
 

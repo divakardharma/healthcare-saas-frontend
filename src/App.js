@@ -19,11 +19,14 @@ import defaultTheme from "./themes/defaultTheme";
 import GlobalStyle from "./styles/GlobalStyle";
 
 import ErrorBoundary from "./components/common/ErrorBoundary";
+import useIdleLogout from "./modules/auth/hooks/useIdleLogout";
 
 let authInitializationStarted = false;
 
 function App() {
   const dispatch = useDispatch();
+
+   useIdleLogout();
 
   useEffect(() => {
     if (authInitializationStarted) {
