@@ -4,10 +4,21 @@ import { useDispatch } from "react-redux";
 import AppRouter from "./routes/AppRouter";
 
 import { getCsrfToken } from "./modules/auth/authAPI";
-import { refreshRequest } from "./modules/auth/authSlice";
+import {
+  refreshRequest,
+  logoutSuccess,
+  authInitializationFailed,
+} from "./modules/auth/authSlice";
 
 import tokenService from "./services/tokenService";
 import { decryptData } from "./services/encryptionService";
+
+import { ThemeProvider } from "styled-components";
+import defaultTheme from "./themes/defaultTheme";
+
+import GlobalStyle from "./styles/GlobalStyle";
+
+import ErrorBoundary from "./components/common/ErrorBoundary";
 
 let authInitializationStarted = false;
 
@@ -41,17 +52,34 @@ function App() {
         dispatch(refreshRequest());
 
       } catch (error) {
-        console.error(
-          "Auth initialization failed:",
-          error
-        );
-      }
+  console.error("Auth initialization failed:", error);
+  dispatch(authInitializationFailed());
+}
     };
 
     initializeAuth();
   }, [dispatch]);
 
-  return <AppRouter />;
+  
+    useEffect(() => {
+  tokenService.setAuthFailureHandler(() => {
+    dispatch(logoutSuccess());
+  });
+
+  return () => {
+    tokenService.setAuthFailureHandler(null);
+  };
+}, [dispatch]);
+
+return (
+  <ThemeProvider theme={defaultTheme}>
+    <GlobalStyle />
+
+    <ErrorBoundary>
+      <AppRouter />
+    </ErrorBoundary>
+  </ThemeProvider>
+);
 }
 
 export default App;

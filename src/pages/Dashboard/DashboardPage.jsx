@@ -1,15 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import useAuth from "../../modules/auth/hooks/useAuth";
+import DashboardLayout from "../../components/layout/DashboardLayout";
+import { Button } from "../../components/common";
 
 function DashboardPage() {
   const navigate = useNavigate();
-
-  const {
-    isAuthenticated,
-    loading,
-    logoutUser,
-  } = useAuth();
+  const { isAuthenticated, loading, logoutUser } = useAuth();
 
   useEffect(() => {
     if (!isAuthenticated && !loading) {
@@ -18,17 +15,19 @@ function DashboardPage() {
   }, [isAuthenticated, loading, navigate]);
 
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Login successful.</p>
+    <DashboardLayout>
+      <div>
+        <h1>Dashboard</h1>
+        <p>Login successful.</p>
 
-      <button
-        onClick={logoutUser}
-        disabled={loading}
-      >
+        <Button onClick={logoutUser} disabled={loading}>
         {loading ? "Logging out..." : "Logout"}
-      </button>
-    </div>
+        </Button>
+
+
+
+      </div>
+    </DashboardLayout>
   );
 }
 
