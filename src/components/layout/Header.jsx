@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import useAuth from "../../modules/auth/hooks/useAuth";
+import useTenant from "../../modules/tenant/hooks/useTenant";
 
 const HeaderContainer = styled.header`
   height: 70px;
@@ -19,10 +20,22 @@ const HeaderLeft = styled.div`
   align-items: center;
   gap: 12px;
 `;
+
+const HeaderTitleSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
 const HeaderTitle = styled.h2`
   margin: 0;
   font-size: 20px;
   color: ${({ theme }) => theme.colors.textPrimary};
+`;
+
+const TenantName = styled.span`
+  font-size: 13px;
+  color: ${({ theme }) => theme.colors.textSecondary};
 `;
 
 const HeaderUser = styled.span`
@@ -42,18 +55,26 @@ const MenuButton = styled.button`
     display: inline-block;
   }
 `;
+
 function Header({ onMenuClick }) {
   const { user } = useAuth();
+  const { tenant } = useTenant();
 
   return (
     <HeaderContainer>
-<HeaderLeft>
-  <MenuButton onClick={onMenuClick} aria-label="Toggle menu">
-    ☰
-  </MenuButton>
+      <HeaderLeft>
+        <MenuButton onClick={onMenuClick} aria-label="Toggle menu">
+          ☰
+        </MenuButton>
 
-  <HeaderTitle>Healthcare SaaS</HeaderTitle>
-</HeaderLeft>
+        <HeaderTitleSection>
+          <HeaderTitle>Healthcare SaaS</HeaderTitle>
+
+          <TenantName>
+            {tenant?.name || tenant?.subdomain || "Tenant"}
+          </TenantName>
+        </HeaderTitleSection>
+      </HeaderLeft>
 
       <HeaderUser>
         {user?.name || user?.email || "User"}
@@ -61,4 +82,5 @@ function Header({ onMenuClick }) {
     </HeaderContainer>
   );
 }
+
 export default Header;

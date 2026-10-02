@@ -14,17 +14,34 @@ import tokenService from "./services/tokenService";
 import { decryptData } from "./services/encryptionService";
 
 import { ThemeProvider } from "styled-components";
-import defaultTheme from "./themes/defaultTheme";
 
 import GlobalStyle from "./styles/GlobalStyle";
 
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import useIdleLogout from "./modules/auth/hooks/useIdleLogout";
+import getTenantFromDomain from "./utils/getTenantFromDomain";
+import {
+  setTenant,
+  fetchTenantRequest,
+} from "./modules/tenant/tenantSlice";
+import useTenant from "./modules/tenant/hooks/useTenant";
+import createTenantTheme from "./themes/createTenantTheme";
 
 let authInitializationStarted = false;
 
 function App() {
   const dispatch = useDispatch();
+  const { tenant } = useTenant();
+const theme = createTenantTheme(tenant);
+
+useEffect(() => {
+  const subdomain = getTenantFromDomain();
+
+  if (subdomain) {
+    dispatch(setTenant(subdomain));
+    dispatch(fetchTenantRequest());
+  }
+}, [dispatch]);
 
    useIdleLogout();
 
@@ -75,7 +92,7 @@ function App() {
 }, [dispatch]);
 
 return (
-  <ThemeProvider theme={defaultTheme}>
+ <ThemeProvider theme={theme}>
     <GlobalStyle />
 
     <ErrorBoundary>
