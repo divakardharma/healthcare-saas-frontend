@@ -18,31 +18,61 @@ function* handleFetchTenant() {
 
     yield put(fetchTenantSuccess(decryptedData.data));
   } catch (error) {
-    yield put(
-      fetchTenantFailure(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to fetch tenant configuration"
-      )
-    );
+    let errorMessage = "Failed to fetch tenant configuration";
+
+    try {
+      const encryptedPayload = error.response?.data?.payload;
+
+      if (encryptedPayload) {
+        const decryptedError = decryptData(encryptedPayload);
+
+        errorMessage =
+          decryptedError?.message ||
+          errorMessage;
+      } else {
+        errorMessage =
+          error.response?.data?.message ||
+          errorMessage;
+      }
+    } catch (decryptError) {
+      errorMessage = "Failed to fetch tenant configuration";
+    }
+
+    yield put(fetchTenantFailure(errorMessage));
   }
 }
 
 function* handleRegisterTenant(action) {
-  try {
+ try {
     const response = yield call(registerTenantAPI, action.payload);
 
     const decryptedData = decryptData(response.data.payload);
 
     yield put(registerTenantSuccess(decryptedData.data));
   } catch (error) {
-    yield put(
-      registerTenantFailure(
-        error.response?.data?.message ||
-          error.message ||
-          "Tenant registration failed"
-      )
-    );
+    let errorMessage = "Tenant registration failed";
+
+    try {
+      const encryptedPayload = error.response?.data?.payload;
+
+      if (encryptedPayload) {
+        const decryptedError = decryptData(encryptedPayload);
+
+        console.log("Tenant Registration Error:", decryptedError);
+
+        errorMessage =
+          decryptedError?.message ||
+          errorMessage;
+      } else {
+        errorMessage =
+          error.response?.data?.message ||
+          errorMessage;
+      }
+    } catch (decryptError) {
+      errorMessage = "Tenant registration failed";
+    }
+
+    yield put(registerTenantFailure(errorMessage));
   }
 }
 
