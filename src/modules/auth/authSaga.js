@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects";
-import { loginAPI, refreshTokenAPI , logoutAPI,  getCsrfToken, } from "./authAPI";
+import { loginAPI, refreshTokenAPI , logoutAPI,  getCsrfToken,} from "./authAPI";
 import {
   loginRequest,
   loginSuccess,
@@ -58,20 +58,18 @@ function* handleRefresh() {
 
     const decryptedData = decryptData(response.data.payload);
 
-    const { access_token, csrf_token } = decryptedData.data;
+    const { user, access_token, csrf_token } = decryptedData.data;
 
     tokenService.setAccessToken(access_token);
     tokenService.setCsrfToken(csrf_token);
 
     yield put(
       refreshSuccess({
+        user,
         accessToken: access_token,
       })
     );
-
   } catch (error) {
-    // tokenService.clearTokens();
-
     yield put(refreshFailure());
   }
 }

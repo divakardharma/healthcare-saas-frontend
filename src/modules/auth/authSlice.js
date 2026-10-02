@@ -40,6 +40,7 @@ const authSlice = createSlice({
     refreshSuccess: (state, action) => {
       state.loading = false;
       state.initialized = true;
+      state.user = action.payload.user;
       state.accessToken = action.payload.accessToken;
       state.isAuthenticated = true;
       state.error = null;
