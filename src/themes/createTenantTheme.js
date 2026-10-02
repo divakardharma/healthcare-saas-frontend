@@ -1,12 +1,18 @@
 import defaultTheme from "./defaultTheme";
 
 function createTenantTheme(tenant) {
+  const metadata = tenant?.metadata || {};
+
   return {
     ...defaultTheme,
-    ...tenant?.theme,
+
     colors: {
       ...defaultTheme.colors,
-      ...tenant?.theme?.colors,
+
+      primary: metadata.primary_color || defaultTheme.colors.primary,
+
+      primaryHover:
+        metadata.primary_hover || defaultTheme.colors.primaryHover,
     },
   };
 }

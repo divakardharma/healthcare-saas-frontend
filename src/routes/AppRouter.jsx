@@ -5,10 +5,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import RoleBasedRoute from "./RoleBasedRoute";
 
 const LoginPage = lazy(() => import("../pages/Auth/LoginPage"));
-
-const DashboardPage = lazy(() =>
-  import("../pages/Dashboard/DashboardPage")
-);
+const RegisterPage = lazy(() => import("../pages/Auth/RegisterPage"));
+const DashboardPage = lazy(() =>import("../pages/Dashboard/DashboardPage"));
 
 function AppRouter() {
   return (
@@ -18,6 +16,7 @@ function AppRouter() {
           <Route path="/" element={<h1>Healthcare SaaS</h1>} />
 
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
            <Route path="/dashboard" element={
            <ProtectedRoute>
