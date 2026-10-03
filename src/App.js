@@ -14,54 +14,74 @@ import tokenService from "./services/tokenService";
 import { decryptData } from "./services/encryptionService";
 
 import { ThemeProvider } from "styled-components";
-import defaultTheme from "./themes/defaultTheme";
 
 import GlobalStyle from "./styles/GlobalStyle";
 
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import useIdleLogout from "./modules/auth/hooks/useIdleLogout";
+import getTenantFromDomain from "./utils/getTenantFromDomain";
+import {
+  setTenant,
+  fetchTenantRequest,
+} from "./modules/tenant/tenantSlice";
+import useTenant from "./modules/tenant/hooks/useTenant";
+import createTenantTheme from "./themes/createTenantTheme";
 
 let authInitializationStarted = false;
 
 function App() {
   const dispatch = useDispatch();
+  const { tenant } = useTenant();
+const theme = createTenantTheme(tenant);
+
+useEffect(() => {
+  const subdomain = getTenantFromDomain();
+
+  if (subdomain) {
+    dispatch(setTenant(subdomain));
+    dispatch(fetchTenantRequest());
+  }
+}, [dispatch]);
 
    useIdleLogout();
 
-  useEffect(() => {
-    if (authInitializationStarted) {
-      return;
-    }
+useEffect(() => {
+  if (authInitializationStarted) {
+    return;
+  }
 
-    authInitializationStarted = true;
+  authInitializationStarted = true;
 
-    const initializeAuth = async () => {
-      try {
-        // 1. Get fresh CSRF token
-        const response = await getCsrfToken();
+  const initializeAuth = async () => {
+    try {
+      // 1. Get fresh CSRF token
+      const response = await getCsrfToken();
 
-        // 2. Decrypt response
-        const decryptedData = decryptData(
-          response.data.payload
-        );
+      // 2. Decrypt response
+      const decryptedData = decryptData(response.data.payload);
 
-        // 3. Store CSRF in memory
-        const csrfToken =
-          decryptedData.data.csrf_token;
+      // 3. Store CSRF in memory
+      const csrfToken = decryptedData.data.csrf_token;
 
-        tokenService.setCsrfToken(csrfToken);
+      tokenService.setCsrfToken(csrfToken);
 
-        // 4. Restore login using HttpOnly refresh cookie
+      // 4. Restore login only on protected/application pages
+      const publicPaths = ["/login", "/register"];
+      const currentPath = window.location.pathname;
+
+      if (!publicPaths.includes(currentPath)) {
         dispatch(refreshRequest());
+      } else {
+        dispatch(authInitializationFailed());
+      }
+    } catch (error) {
+      console.error("Auth initialization failed:", error);
+      dispatch(authInitializationFailed());
+    }
+  };
 
-      } catch (error) {
-  console.error("Auth initialization failed:", error);
-  dispatch(authInitializationFailed());
-}
-    };
-
-    initializeAuth();
-  }, [dispatch]);
+  initializeAuth();
+}, [dispatch]);
 
   
     useEffect(() => {
@@ -75,7 +95,7 @@ function App() {
 }, [dispatch]);
 
 return (
-  <ThemeProvider theme={defaultTheme}>
+ <ThemeProvider theme={theme}>
     <GlobalStyle />
 
     <ErrorBoundary>

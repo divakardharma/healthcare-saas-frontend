@@ -40,15 +40,27 @@ function* handleLogin(action) {
 
 
   } catch (error) {
-    // console.error("Login Error:", error);
+    let errorMessage = "Login failed";
 
-    yield put(
-      loginFailure(
-        error.response?.data?.message ||
-        error.message ||
-        "Login failed"
-      )
-    );
+    try {
+      const encryptedPayload = error.response?.data?.payload;
+
+      if (encryptedPayload) {
+        const decryptedError = decryptData(encryptedPayload);
+
+        errorMessage =
+          decryptedError?.message ||
+          errorMessage;
+      } else {
+        errorMessage =
+          error.response?.data?.message ||
+          errorMessage;
+      }
+    } catch (decryptError) {
+      errorMessage = "Login failed";
+    }
+
+    yield put(loginFailure(errorMessage));
   }
 }
 

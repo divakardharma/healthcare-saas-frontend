@@ -40,6 +40,8 @@ function Input({
   onChange,
   placeholder = "",
   disabled = false,
+  required = false,
+  autoComplete,
 }) {
   return (
     <InputWrapper>
@@ -53,6 +55,8 @@ function Input({
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
+        required={required}
+        autoComplete={autoComplete}
       />
     </InputWrapper>
   );

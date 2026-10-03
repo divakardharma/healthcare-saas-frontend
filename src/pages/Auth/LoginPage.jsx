@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../../modules/auth/hooks/useAuth";
+import { Input, Button, Card } from "../../components/common";
+import styles from "./LoginPage.module.css";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
@@ -31,38 +33,60 @@ function LoginPage() {
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-          />
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Welcome back</h1>
+          <p className={styles.subtitle}>Login to your account to continue.</p>
         </div>
 
-        <div>
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            required
-          />
-        </div>
+        <Card>
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <Input
+              label="Email"
+              type="email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter email"
+              autoComplete="email"
+              required
+              disabled={loading}
+            />
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
+            <Input
+              label="Password"
+              type="password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password"
+              autoComplete="current-password"
+              required
+              disabled={loading}
+            />
 
-        {error && <p>{error}</p>}
-      </form>
+            {error && (
+              <div className={styles.alert} role="alert">
+                {error}
+              </div>
+            )}
+
+            <div className={styles.submit}>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
+              </Button>
+            </div>
+          </form>
+        </Card>
+
+        <p className={styles.footer}>
+          New hospital?{" "}
+          <Link to="/register" className={styles.footerLink}>
+            Register here
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,118 @@
+/* Values mirror src/themes/defaultTheme.js */
+.page {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --danger: #dc2626;
+  --radius-small: 6px;
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.container {
+  width: 100%;
+  max-width: 400px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px;
+}
+
+.alert {
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-small);
+  color: var(--danger);
+  background: #fef2f2;
+}
+
+.submit {
+  margin-top: 8px;
+}
+
+.submit button {
+  width: 100%;
+  padding: 12px 18px;
+}
+
+.footer {
+  margin: 20px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.footerLink {
+  color: var(--primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.footerLink:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+/* Tablet and up */
+@media (min-width: 768px) {
+  .container {
+    max-width: 440px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .form {
+    padding: 16px;
+    gap: 18px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .page {
+    align-items: flex-start;
+    padding: 16px 12px;
+  }
+
+  .header {
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .form {
+    padding: 0;
+  }
+}

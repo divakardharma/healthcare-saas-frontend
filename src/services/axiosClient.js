@@ -38,14 +38,24 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (response) => response,
 
-  async (error) => {
-    const status = error.response?.status;
-    const originalRequest = error.config;
+ async (error) => {
+  const status = error.response?.status;
+  const originalRequest = error.config;
 
-    if (status === 401 && originalRequest && !originalRequest._retry) {
-      originalRequest._retry = true;
+  const isPublicAuthRequest =
+    originalRequest?.url?.includes("/login") ||
+    originalRequest?.url?.includes("/register");
 
-      try {
+  if (
+    status === 401 &&
+    originalRequest &&
+    !originalRequest._retry &&
+    !isPublicAuthRequest
+  ) {
+    originalRequest._retry = true;
+
+    try {
+      // existing refresh code...
         if (!isRefreshing) {
           isRefreshing = true;
 
