@@ -1,29 +1,185 @@
-import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Loader } from "../components/common";
-import ProtectedRoute from "./ProtectedRoute";
-import RoleBasedRoute from "./RoleBasedRoute";
+import {
+  lazy,
+  Suspense,
+} from "react";
 
-const LoginPage = lazy(() => import("../pages/Auth/LoginPage"));
-const RegisterPage = lazy(() => import("../pages/Auth/RegisterPage"));
-const DashboardPage = lazy(() =>import("../pages/Dashboard/DashboardPage"));
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
+
+import { Loader } from "../components/common";
+
+import ProtectedRoute from "./ProtectedRoute";
+
+const LoginPage = lazy(
+  () => import("../pages/Auth/LoginPage")
+);
+
+const RegisterPage = lazy(
+  () => import("../pages/Auth/RegisterPage")
+);
+
+const DashboardPage = lazy(
+  () =>
+    import(
+      "../pages/Dashboard/DashboardPage"
+    )
+);
+
+const UserManagement = lazy(
+  () =>
+    import(
+      "../pages/Settings/UserManagement"
+    )
+);
+
+const PatientList = lazy(
+  () =>
+    import(
+      "../pages/Patients/PatientList"
+    )
+);
+
+const PatientProfile = lazy(
+  () =>
+    import(
+      "../pages/Patients/PatientProfile"
+    )
+);
+
+const AppointmentList = lazy(
+  () =>
+    import(
+      "../pages/Appointments/AppointmentList"
+    )
+);
+
+const AppointmentCalendar = lazy(
+  () =>
+    import(
+      "../pages/Appointments/AppointmentCalendar"
+    )
+);
+
+function Protected({ children }) {
+  return (
+    <ProtectedRoute>
+      {children}
+    </ProtectedRoute>
+  );
+}
 
 function AppRouter() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<Loader />}>
+      <Suspense
+        fallback={<Loader />}
+      >
         <Routes>
-          <Route path="/" element={<h1>Healthcare SaaS</h1>} />
+          <Route
+            path="/"
+            element={
+              <Navigate
+                to="/dashboard"
+                replace
+              />
+            }
+          />
 
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/login"
+            element={<LoginPage />}
+          />
 
-           <Route path="/dashboard" element={
-           <ProtectedRoute>
-              <DashboardPage />
-          </ProtectedRoute>}/>
+          <Route
+            path="/register"
+            element={<RegisterPage />}
+          />
 
-          
+          <Route
+            path="/dashboard"
+            element={
+              <Protected>
+                <DashboardPage />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/users"
+            element={
+              <Protected>
+                <UserManagement />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <Protected>
+                <UserManagement />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/settings/users"
+            element={
+              <Protected>
+                <UserManagement />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/patients"
+            element={
+              <Protected>
+                <PatientList />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/patients/:id"
+            element={
+              <Protected>
+                <PatientProfile />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/appointments"
+            element={
+              <Protected>
+                <AppointmentList />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/calendar"
+            element={
+              <Protected>
+                <AppointmentCalendar />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to="/dashboard"
+                replace
+              />
+            }
+          />
         </Routes>
       </Suspense>
     </BrowserRouter>
