@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { NavLink } from "react-router-dom";
+import useAuth from "../../modules/auth/hooks/useAuth";
 
 const SidebarContainer = styled.aside`
   width: 240px;
@@ -18,18 +19,22 @@ const SidebarContainer = styled.aside`
     z-index: 1100;
 
     transform: ${({ $isOpen }) =>
-      $isOpen ? "translateX(0)" : "translateX(-100%)"};
+      $isOpen
+        ? "translateX(0)"
+        : "translateX(-100%)"};
 
     transition: transform 0.3s ease;
   }
 `;
+
 const SidebarLogo = styled.div`
   margin-bottom: 30px;
 
   h2 {
     margin: 0;
     font-size: 22px;
-    color: ${({ theme }) => theme.colors.textPrimary};
+    color: ${({ theme }) =>
+      theme.colors.textPrimary};
   }
 `;
 
@@ -37,7 +42,9 @@ const Overlay = styled.div`
   display: none;
 
   @media (max-width: 768px) {
-    display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
+    display: ${({ $isOpen }) =>
+      $isOpen ? "block" : "none"};
+
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
@@ -53,70 +60,141 @@ const SidebarNav = styled.nav`
 
 const SidebarLink = styled(NavLink)`
   text-decoration: none;
-  color: ${({ theme }) => theme.colors.textSecondary};
+
+  color: ${({ theme }) =>
+    theme.colors.textSecondary};
+
   padding: 10px 12px;
-  border-radius: ${({ theme }) => theme.borderRadius.small};
+
+  border-radius: ${({ theme }) =>
+    theme.borderRadius.small};
 
   &:hover {
-    background: ${({ theme }) => theme.colors.disabled};
+    background: ${({ theme }) =>
+      theme.colors.disabled};
   }
 
   &.active {
-    background: ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.surface};
+    background: ${({ theme }) =>
+      theme.colors.primary};
+
+    color: ${({ theme }) =>
+      theme.colors.surface};
+
     font-weight: 600;
   }
 `;
 
 function Sidebar({ isOpen, onClose }) {
-return (
-  <>
-    <Overlay
-      $isOpen={isOpen}
-      onClick={onClose}
-    />
+  const { user } = useAuth();
 
-    <SidebarContainer $isOpen={isOpen}>
-      <SidebarLogo>
-        <h2>Healthcare</h2>
-      </SidebarLogo>
+  const userRoles = Array.isArray(user?.roles)
+    ? user.roles
+    : user?.role
+      ? [user.role]
+      : [];
 
-      <SidebarNav>
-  <SidebarLink to="/dashboard" onClick={onClose}>
-    Dashboard
-  </SidebarLink>
+  const hasRole = (allowedRoles) =>
+    allowedRoles.some((role) =>
+      userRoles.includes(role)
+    );
 
-  <SidebarLink to="/patients" onClick={onClose}>
-    Patients
-  </SidebarLink>
+  return (
+    <>
+      <Overlay
+        $isOpen={isOpen}
+        onClick={onClose}
+      />
 
-  <SidebarLink to="/appointments" onClick={onClose}>
-    Appointments
-  </SidebarLink>
+      <SidebarContainer $isOpen={isOpen}>
+        <SidebarLogo>
+          <h2>Healthcare</h2>
+        </SidebarLogo>
 
-  <SidebarLink to="/calendar" onClick={onClose}>
-    Calendar
-  </SidebarLink>
+        <SidebarNav>
+          {/* Common */}
+          <SidebarLink
+            to="/dashboard"
+            onClick={onClose}
+          >
+            Dashboard
+          </SidebarLink>
 
-  <SidebarLink to="/prescriptions" onClick={onClose}>
-    Prescriptions
-  </SidebarLink>
+          {/* Module 3 - Patient Management */}
+          {hasRole([
+            "Provider",
+            "Nurse",
+          ]) && (
+            <SidebarLink
+              to="/patients"
+              onClick={onClose}
+            >
+              Patients
+            </SidebarLink>
+          )}
 
-  <SidebarLink to="/billing" onClick={onClose}>
-    Billing
-  </SidebarLink>
+          {/* Module 4 - Appointment Management */}
+          {hasRole([
+            "Provider",
+            "Nurse",
+          ]) && (
+            <SidebarLink
+              to="/appointments"
+              onClick={onClose}
+            >
+              Appointments
+            </SidebarLink>
+          )}
 
-  <SidebarLink to="/staff" onClick={onClose}>
-    Staff
-  </SidebarLink>
+          {/* Module 10 - Calendar */}
+          {hasRole([
+            "Provider",
+            "Nurse",
+            "Receptionist",
+          ]) && (
+            <SidebarLink
+              to="/calendar"
+              onClick={onClose}
+            >
+              Calendar
+            </SidebarLink>
+          )}
 
-  <SidebarLink to="/settings" onClick={onClose}>
-    Settings
-  </SidebarLink>
-</SidebarNav>
-    </SidebarContainer>
-  </>
-);
+          {/* Existing modules - untouched */}
+          <SidebarLink
+            to="/prescriptions"
+            onClick={onClose}
+          >
+            Prescriptions
+          </SidebarLink>
+
+          <SidebarLink
+            to="/billing"
+            onClick={onClose}
+          >
+            Billing
+          </SidebarLink>
+
+          <SidebarLink
+            to="/staff"
+            onClick={onClose}
+          >
+            Staff
+          </SidebarLink>
+
+          {/* Module 2 - User & Role Management */}
+          {hasRole(["Admin"]) && (
+            <SidebarLink
+              to="/settings"
+              onClick={onClose}
+            >
+              Settings
+            </SidebarLink>
+          )}
+        </SidebarNav>
+      </SidebarContainer>
+    </>
+  );
 }
 
 export default Sidebar;

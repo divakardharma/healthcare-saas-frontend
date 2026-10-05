@@ -1,15 +1,25 @@
 import { combineReducers } from "@reduxjs/toolkit";
-import tenantReducer from "../modules/tenant/tenantSlice";
+
 import authReducer from "../modules/auth/authSlice";
+import tenantReducer from "../modules/tenant/tenantSlice";
+
+import userReducer from "../modules/users/userSlice";
+import patientReducer from "../modules/patients/patientSlice";
+import appointmentReducer from "../modules/appointments/appointmentSlice";
+import calendarReducer from "../modules/calendar/calendarSlice";
 
 import dashboardReducer from "../modules/dashboard/dashboardSlice";
 import prescriptionReducer from "../modules/prescription/prescriptionSlice";
 
 const rootReducer = combineReducers({
-  tenant: tenantReducer,
   auth: authReducer,
+  tenant: tenantReducer,
+  users: userReducer,
+  patients: patientReducer,
+  appointments: appointmentReducer,
+  calendar: calendarReducer,
   dashboard: dashboardReducer,
-  prescription: prescriptionReducer,
+  prescription: prescriptionReducer
 });
 
 export default rootReducer;
