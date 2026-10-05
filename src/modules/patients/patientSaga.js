@@ -1,6 +1,8 @@
 import {
   call,
   put,
+  select,
+  takeEvery,
   takeLatest,
 } from "redux-saga/effects";
 
@@ -14,8 +16,10 @@ import {
 
 import {
   fetchPatientsRequest,
+  fetchPatientsStart,
   fetchPatientsSuccess,
   fetchPatientsFailure,
+  resetPatientBatches,
   fetchPatientRequest,
   fetchPatientSuccess,
   fetchPatientFailure,
@@ -51,29 +55,64 @@ const getErrorMessage = (error, fallback) => {
   );
 };
 
-function* fetchPatients() {
+const selectPatients = (state) => state.patients;
+
+// Fetches ONE batch (16 patients). Used for both the batch the user is
+// waiting on and background prefetches, so duplicate protection lives here.
+function* fetchPatients(action) {
+  const { page, prefetch } = action.payload;
+
+  const { batches, inFlight, cacheVersion } =
+    yield select(selectPatients);
+
+  // Already cached, or already being requested: never request it twice.
+  if (batches[page] || inFlight[page]) {
+    return;
+  }
+
+  yield put(fetchPatientsStart({ page, prefetch }));
+
   try {
     const result = decryptResponse(
-      yield call(getPatientsAPI)
+      yield call(getPatientsAPI, page)
     );
 
+    const patients = Array.isArray(result.data)
+      ? result.data
+      : [];
+
+    const pagination = result.pagination || {};
+
     yield put(
-      fetchPatientsSuccess(
-        Array.isArray(result.data)
-          ? result.data
-          : []
-      )
+      fetchPatientsSuccess({
+        page,
+        version: cacheVersion,
+        patients,
+        total: Number.isFinite(pagination.total)
+          ? pagination.total
+          : patients.length,
+        hasMore: Boolean(pagination.has_more),
+      })
     );
   } catch (error) {
     yield put(
-      fetchPatientsFailure(
-        getErrorMessage(
+      fetchPatientsFailure({
+        page,
+        version: cacheVersion,
+        message: getErrorMessage(
           error,
           "Failed to fetch patients"
-        )
-      )
+        ),
+      })
     );
   }
+}
+
+// After any create/update/delete the cached batches are stale (ids shift
+// between batches), so drop them and reload batch 1.
+function* refreshPatientsAfterChange() {
+  yield put(resetPatientBatches());
+  yield put(fetchPatientsRequest(1));
 }
 
 function* fetchPatient(action) {
@@ -113,7 +152,7 @@ function* createPatient(action) {
       patientActionSuccess(result.data)
     );
 
-    yield put(fetchPatientsRequest());
+    yield call(refreshPatientsAfterChange);
   } catch (error) {
     yield put(
       patientActionFailure(
@@ -142,7 +181,7 @@ function* updatePatient(action) {
       patientActionSuccess(result.data)
     );
 
-    yield put(fetchPatientsRequest());
+    yield call(refreshPatientsAfterChange);
   } catch (error) {
     yield put(
       patientActionFailure(
@@ -163,7 +202,7 @@ function* deletePatient(action) {
     );
 
     yield put(patientActionSuccess({}));
-    yield put(fetchPatientsRequest());
+    yield call(refreshPatientsAfterChange);
   } catch (error) {
     yield put(
       patientActionFailure(
@@ -177,7 +216,9 @@ function* deletePatient(action) {
 }
 
 export default function* patientSaga() {
-  yield takeLatest(
+  // takeEvery (not takeLatest): a prefetch and a page change can overlap,
+  // and takeLatest would cancel the first and leave it stuck "in flight".
+  yield takeEvery(
     fetchPatientsRequest.type,
     fetchPatients
   );

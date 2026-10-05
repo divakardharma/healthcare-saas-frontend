@@ -5,16 +5,28 @@ import { useState } from "react";
 
 const Layout = styled.div`
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: ${({ theme }) => theme.colors.background};
 `;
 
 const Main = styled.div`
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+`;
+
+const HeaderSlot = styled.div`
+  flex: none;
 `;
 
 const Content = styled.main`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 24px;
 
   @media (max-width: 768px) {
@@ -33,9 +45,11 @@ function DashboardLayout({ children }) {
 />
 
       <Main>
-        <Header
-  onMenuClick={() => setIsSidebarOpen((prev) => !prev)}
-/>
+        <HeaderSlot>
+          <Header
+            onMenuClick={() => setIsSidebarOpen((prev) => !prev)}
+          />
+        </HeaderSlot>
 
         <Content>{children}</Content>
       </Main>

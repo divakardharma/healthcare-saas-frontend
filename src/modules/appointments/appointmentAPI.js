@@ -5,8 +5,10 @@ const encryptedBody = (data) => ({
   payload: encryptData(data),
 });
 
-export const getAppointmentsAPI = () =>
-  axiosClient.get("/appointments");
+// One API request = one batch of appointments. The backend owns the batch
+// size (20), so only the batch number is sent.
+export const getAppointmentsAPI = (page = 1) =>
+  axiosClient.get("/appointments", { params: { page } });
 
 export const getAppointmentAPI = (id) =>
   axiosClient.get(`/appointments/${id}`);

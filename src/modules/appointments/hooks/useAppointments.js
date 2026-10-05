@@ -21,10 +21,13 @@ export default function useAppointments() {
     (store) => store.appointments
   );
 
+  // fetchAppointments()            -> batch 1
+  // fetchAppointments(2)           -> batch 2
+  // fetchAppointments(2, { prefetch: true }) -> background request for batch 2
   const fetchAppointments = useCallback(
-    () =>
+    (page = 1, options = {}) =>
       dispatch(
-        fetchAppointmentsRequest()
+        fetchAppointmentsRequest(page, options)
       ),
     [dispatch]
   );

@@ -4,6 +4,8 @@ const initialState = {
   appointments: [],
   selectedAppointment: null,
   loading: false,
+  detailLoading: false,
+  detailError: null,
   error: null,
 };
 
@@ -38,20 +40,29 @@ const calendarSlice = createSlice({
       state.error = action.payload;
     },
 
+    // Details use their own loading flag so opening one
+    // appointment does not blank out the whole list.
     fetchTooltipRequest: (state) => {
-      state.loading = true;
-      state.error = null;
+      state.detailLoading = true;
+      state.detailError = null;
+      state.selectedAppointment = null;
     },
 
     fetchTooltipSuccess: (state, action) => {
-      state.loading = false;
+      state.detailLoading = false;
       state.selectedAppointment =
         action.payload;
     },
 
     fetchTooltipFailure: (state, action) => {
-      state.loading = false;
-      state.error = action.payload;
+      state.detailLoading = false;
+      state.detailError = action.payload;
+    },
+
+    clearSelectedAppointment: (state) => {
+      state.selectedAppointment = null;
+      state.detailLoading = false;
+      state.detailError = null;
     },
 
     clearCalendarError: (state) => {
@@ -69,6 +80,7 @@ export const {
   fetchTooltipRequest,
   fetchTooltipSuccess,
   fetchTooltipFailure,
+  clearSelectedAppointment,
   clearCalendarError,
 } = calendarSlice.actions;
 
