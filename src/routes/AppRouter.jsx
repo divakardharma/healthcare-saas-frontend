@@ -6,7 +6,9 @@ import RoleBasedRoute from "./RoleBasedRoute";
 
 const LoginPage = lazy(() => import("../pages/Auth/LoginPage"));
 const RegisterPage = lazy(() => import("../pages/Auth/RegisterPage"));
-const DashboardPage = lazy(() =>import("../pages/Dashboard/DashboardPage"));
+const DashboardPage = lazy(() => import("../pages/Dashboard/DashboardPage"));
+
+const PrescriptionPage = lazy(() => import("../pages/Prescription/PrescriptionPage"));
 
 function AppRouter() {
   return (
@@ -18,12 +20,20 @@ function AppRouter() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
-           <Route path="/dashboard" element={
-           <ProtectedRoute>
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
               <DashboardPage />
-          </ProtectedRoute>}/>
+            </ProtectedRoute>} />
 
-          
+          <Route
+            path="/prescriptions"
+            element={
+              <ProtectedRoute>
+                <PrescriptionPage />
+              </ProtectedRoute>
+            }
+          />
+
         </Routes>
       </Suspense>
     </BrowserRouter>
