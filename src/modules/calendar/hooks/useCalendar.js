@@ -9,6 +9,7 @@ import {
   fetchCalendarRangeRequest,
   fetchUpcomingRequest,
   fetchTooltipRequest,
+  clearSelectedAppointment,
   clearCalendarError,
 } from "../calendarSlice";
 
@@ -62,6 +63,14 @@ export default function useCalendar() {
     [dispatch]
   );
 
+  const clearSelected = useCallback(
+    () =>
+      dispatch(
+        clearSelectedAppointment()
+      ),
+    [dispatch]
+  );
+
   const clearError = useCallback(
     () =>
       dispatch(
@@ -76,6 +85,7 @@ export default function useCalendar() {
     fetchRange,
     fetchUpcoming,
     fetchTooltip,
+    clearSelected,
     clearError,
   };
 }

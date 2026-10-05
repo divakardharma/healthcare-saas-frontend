@@ -1,6 +1,8 @@
 import {
   call,
   put,
+  select,
+  takeEvery,
   takeLatest,
 } from "redux-saga/effects";
 
@@ -15,8 +17,10 @@ import {
 
 import {
   fetchAppointmentsRequest,
+  fetchAppointmentsStart,
   fetchAppointmentsSuccess,
   fetchAppointmentsFailure,
+  invalidateAppointmentBatches,
   fetchAppointmentRequest,
   fetchAppointmentSuccess,
   fetchAppointmentFailure,
@@ -53,29 +57,64 @@ const getErrorMessage = (error, fallback) => {
   );
 };
 
-function* fetchAppointments() {
+const selectAppointments = (state) => state.appointments;
+
+// Fetches ONE batch (20 appointments). Used for both the batch the user is
+// waiting on and background prefetches, so duplicate protection lives here.
+function* fetchAppointments(action) {
+  const { page, prefetch } = action.payload;
+
+  const { batches, inFlight, cacheVersion } =
+    yield select(selectAppointments);
+
+  // Already cached, or already being requested: never request it twice.
+  if (batches[page] || inFlight[page]) {
+    return;
+  }
+
+  yield put(fetchAppointmentsStart({ page, prefetch }));
+
   try {
     const result = decryptResponse(
-      yield call(getAppointmentsAPI)
+      yield call(getAppointmentsAPI, page)
     );
 
+    const appointments = Array.isArray(result.data)
+      ? result.data
+      : [];
+
+    const pagination = result.pagination || {};
+
     yield put(
-      fetchAppointmentsSuccess(
-        Array.isArray(result.data)
-          ? result.data
-          : []
-      )
+      fetchAppointmentsSuccess({
+        page,
+        version: cacheVersion,
+        appointments,
+        total: Number.isFinite(pagination.total)
+          ? pagination.total
+          : appointments.length,
+        hasMore: Boolean(pagination.has_more),
+      })
     );
   } catch (error) {
     yield put(
-      fetchAppointmentsFailure(
-        getErrorMessage(
+      fetchAppointmentsFailure({
+        page,
+        version: cacheVersion,
+        message: getErrorMessage(
           error,
           "Failed to fetch appointments"
-        )
-      )
+        ),
+      })
     );
   }
+}
+
+// After any create/update/status/cancel the cached batches are stale
+// (appointments move between batches), so drop them and reload batch 1 only.
+function* refreshAppointmentsAfterChange() {
+  yield put(invalidateAppointmentBatches());
+  yield put(fetchAppointmentsRequest(1));
 }
 
 function* fetchAppointment(action) {
@@ -115,7 +154,7 @@ function* createAppointment(action) {
       appointmentActionSuccess(result.data)
     );
 
-    yield put(fetchAppointmentsRequest());
+    yield call(refreshAppointmentsAfterChange);
   } catch (error) {
     yield put(
       appointmentActionFailure(
@@ -144,7 +183,7 @@ function* updateAppointment(action) {
       appointmentActionSuccess(result.data)
     );
 
-    yield put(fetchAppointmentsRequest());
+    yield call(refreshAppointmentsAfterChange);
   } catch (error) {
     yield put(
       appointmentActionFailure(
@@ -173,7 +212,7 @@ function* updateAppointmentStatus(action) {
       appointmentActionSuccess(result.data)
     );
 
-    yield put(fetchAppointmentsRequest());
+    yield call(refreshAppointmentsAfterChange);
   } catch (error) {
     yield put(
       appointmentActionFailure(
@@ -199,7 +238,7 @@ function* cancelAppointment(action) {
       appointmentActionSuccess(result.data)
     );
 
-    yield put(fetchAppointmentsRequest());
+    yield call(refreshAppointmentsAfterChange);
   } catch (error) {
     yield put(
       appointmentActionFailure(
@@ -213,7 +252,9 @@ function* cancelAppointment(action) {
 }
 
 export default function* appointmentSaga() {
-  yield takeLatest(
+  // takeEvery (not takeLatest): a prefetch and a page change can overlap,
+  // and takeLatest would cancel the first and leave it stuck "in flight".
+  yield takeEvery(
     fetchAppointmentsRequest.type,
     fetchAppointments
   );
