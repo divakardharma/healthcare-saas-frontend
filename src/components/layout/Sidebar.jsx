@@ -172,12 +172,14 @@ function Sidebar({ isOpen, onClose }) {
             </SidebarLink>
           )}
 
-          <SidebarLink
-            to="/billing"
-            onClick={onClose}
-          >
-            Billing
-          </SidebarLink>
+{hasRole(["Admin", "Provider", "Nurse"]) && (
+  <SidebarLink
+    to="/billing"
+    onClick={onClose}
+  >
+    Billing
+  </SidebarLink>
+)}
 
 {hasRole(["Admin"]) && (
   <SidebarLink
@@ -185,6 +187,12 @@ function Sidebar({ isOpen, onClose }) {
     onClick={onClose}
   >
     Staff
+  </SidebarLink>
+)}
+
+{hasRole(["Provider"]) && (
+  <SidebarLink to="/notifications" onClick={onClose}>
+    Notifications
   </SidebarLink>
 )}
 

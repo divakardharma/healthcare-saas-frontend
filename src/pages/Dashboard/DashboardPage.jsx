@@ -7,7 +7,7 @@ import { useDashboard } from "../../modules/dashboard/hooks/useDashboard";
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, loading, logoutUser } = useAuth();
+const { user, isAuthenticated, loading, logoutUser } = useAuth();
   const {
     data,
     loading: dashboardLoading,
@@ -21,14 +21,36 @@ function DashboardPage() {
     }
   }, [isAuthenticated, loading, navigate]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadDashboard();
-    }
-  }, [isAuthenticated]);
+const userRoles = user?.roles || [];
+
+const canViewDashboard = userRoles.includes("Admin") ||
+  userRoles.includes("Provider");
+
+useEffect(() => {
+  if (isAuthenticated && canViewDashboard) {
+    loadDashboard();
+  }
+}, [isAuthenticated, canViewDashboard]);
 
   const dashboardData = data?.data;
 
+if (!canViewDashboard) {
+  return (
+    <DashboardLayout>
+      <div className="dashboard-container">
+        <div className="welcome-card">
+          <h1>Welcome to Healthcare </h1>
+          <p>
+            Welcome, {user?.name || user?.username || "User"}.
+          </p>
+           <Button onClick={logoutUser} disabled={loading}>
+            {loading ? "Logging out..." : "Logout"}
+          </Button>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
   return (
     <DashboardLayout>
       <style>{`

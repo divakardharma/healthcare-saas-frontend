@@ -19,6 +19,10 @@ const PatientProfile = lazy(() => import("../pages/Patients/PatientProfile"));
 const AppointmentList = lazy(() => import("../pages/Appointments/AppointmentList"));
 const AppointmentCalendar = lazy(() => import("../pages/Appointments/AppointmentCalendar"));
 const StaffPage = lazy(() => import("../pages/Staff/StaffPage"));
+const BillingPage = lazy(() => import("../pages/Billing/BillingPage"));
+const NotificationsPage = lazy(
+  () => import("../pages/Notifications/NotificationsPage")
+);
 
 function Protected({ children }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
@@ -65,6 +69,25 @@ function AppRouter() {
     </RoleBasedRoute>
   }
 />
+
+<Route
+  path="/billing"
+  element={
+    <RoleBasedRoute allowedRoles={["Admin", "Provider", "Nurse"]}>
+      <BillingPage />
+    </RoleBasedRoute>
+  }
+/>
+
+<Route
+  path="/notifications"
+  element={
+    <RoleBasedRoute allowedRoles={["Provider"]}>
+      <NotificationsPage />
+    </RoleBasedRoute>
+  }
+/>
+
           <Route
             path="/users"
             element={
