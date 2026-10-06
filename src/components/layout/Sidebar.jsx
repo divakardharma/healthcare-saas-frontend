@@ -190,7 +190,7 @@ function Sidebar({ isOpen, onClose }) {
               to="/settings"
               onClick={onClose}
             >
-              Settings
+              User management
             </SidebarLink>
           )}
         </SidebarNav>
