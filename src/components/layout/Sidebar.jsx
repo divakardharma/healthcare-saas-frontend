@@ -21,9 +21,9 @@ const SidebarContainer = styled.aside`
     z-index: 1100;
 
     transform: ${({ $isOpen }) =>
-      $isOpen
-        ? "translateX(0)"
-        : "translateX(-100%)"};
+    $isOpen
+      ? "translateX(0)"
+      : "translateX(-100%)"};
 
     transition: transform 0.3s ease;
   }
@@ -36,7 +36,7 @@ const SidebarLogo = styled.div`
     margin: 0;
     font-size: 22px;
     color: ${({ theme }) =>
-      theme.colors.textPrimary};
+    theme.colors.textPrimary};
   }
 `;
 
@@ -45,7 +45,7 @@ const Overlay = styled.div`
 
   @media (max-width: 768px) {
     display: ${({ $isOpen }) =>
-      $isOpen ? "block" : "none"};
+    $isOpen ? "block" : "none"};
 
     position: fixed;
     inset: 0;
@@ -73,15 +73,15 @@ const SidebarLink = styled(NavLink)`
 
   &:hover {
     background: ${({ theme }) =>
-      theme.colors.disabled};
+    theme.colors.disabled};
   }
 
   &.active {
     background: ${({ theme }) =>
-      theme.colors.primary};
+    theme.colors.primary};
 
     color: ${({ theme }) =>
-      theme.colors.surface};
+    theme.colors.surface};
 
     font-weight: 600;
   }
@@ -127,26 +127,26 @@ function Sidebar({ isOpen, onClose }) {
             "Provider",
             "Nurse",
           ]) && (
-            <SidebarLink
-              to="/patients"
-              onClick={onClose}
-            >
-              Patients
-            </SidebarLink>
-          )}
+              <SidebarLink
+                to="/patients"
+                onClick={onClose}
+              >
+                Patients
+              </SidebarLink>
+            )}
 
           {/* Module 4 - Appointment Management */}
           {hasRole([
             "Provider",
             "Nurse",
           ]) && (
-            <SidebarLink
-              to="/appointments"
-              onClick={onClose}
-            >
-              Appointments
-            </SidebarLink>
-          )}
+              <SidebarLink
+                to="/appointments"
+                onClick={onClose}
+              >
+                Appointments
+              </SidebarLink>
+            )}
 
           {/* Module 10 - Calendar */}
           {hasRole([
@@ -154,35 +154,47 @@ function Sidebar({ isOpen, onClose }) {
             "Nurse",
             "Receptionist",
           ]) && (
+              <SidebarLink
+                to="/calendar"
+                onClick={onClose}
+              >
+                Calendar
+              </SidebarLink>
+            )}
+
+          {/* Existing modules - untouched */}
+          {hasRole(["Admin", "Provider", "Pharmacist"]) && (
             <SidebarLink
-              to="/calendar"
+              to="/prescriptions"
               onClick={onClose}
             >
-              Calendar
+              Prescriptions
             </SidebarLink>
           )}
 
-          {/* Existing modules - untouched */}
-          <SidebarLink
-            to="/prescriptions"
-            onClick={onClose}
-          >
-            Prescriptions
-          </SidebarLink>
+{hasRole(["Admin", "Provider", "Nurse"]) && (
+  <SidebarLink
+    to="/billing"
+    onClick={onClose}
+  >
+    Billing
+  </SidebarLink>
+)}
 
-          <SidebarLink
-            to="/billing"
-            onClick={onClose}
-          >
-            Billing
-          </SidebarLink>
+{hasRole(["Admin"]) && (
+  <SidebarLink
+    to="/staff"
+    onClick={onClose}
+  >
+    Staff
+  </SidebarLink>
+)}
 
-          <SidebarLink
-            to="/staff"
-            onClick={onClose}
-          >
-            Staff
-          </SidebarLink>
+{hasRole(["Provider"]) && (
+  <SidebarLink to="/notifications" onClick={onClose}>
+    Notifications
+  </SidebarLink>
+)}
 
           {/* Staff Chat */}
           {hasRole([
