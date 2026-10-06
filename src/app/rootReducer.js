@@ -7,6 +7,7 @@ import userReducer from "../modules/users/userSlice";
 import patientReducer from "../modules/patients/patientSlice";
 import appointmentReducer from "../modules/appointments/appointmentSlice";
 import calendarReducer from "../modules/calendar/calendarSlice";
+import chatReducer from "../modules/chat/chatSlice";
 
 import dashboardReducer from "../modules/dashboard/dashboardSlice";
 import prescriptionReducer from "../modules/prescription/prescriptionSlice";
@@ -26,6 +27,7 @@ const rootReducer = combineReducers({
   staff: staffReducer,
   billing: billingReducer,
   notifications: notificationsReducer,
+  chat: chatReducer,
 });
 
 export default rootReducer;

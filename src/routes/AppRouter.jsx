@@ -24,6 +24,13 @@ const NotificationsPage = lazy(
   () => import("../pages/Notifications/NotificationsPage")
 );
 
+const ChatPage = lazy(
+  () =>
+    import(
+      "../pages/Chat/ChatPage"
+    )
+);
+
 function Protected({ children }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
 }
@@ -144,6 +151,15 @@ function AppRouter() {
               </Protected>
             }
           />
+          <Route
+            path="/chat"
+            element={
+              <Protected>
+                <ChatPage />
+              </Protected>
+            }
+          />
+
           <Route
             path="*"
             element={<Navigate to="/dashboard" replace />}
