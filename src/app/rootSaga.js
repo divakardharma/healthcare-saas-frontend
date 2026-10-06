@@ -7,6 +7,7 @@ import userSaga from "../modules/users/userSaga";
 import patientSaga from "../modules/patients/patientSaga";
 import appointmentSaga from "../modules/appointments/appointmentSaga";
 import calendarSaga from "../modules/calendar/calendarSaga";
+import chatSaga from "../modules/chat/chatSaga";
 
 export default function* rootSaga() {
   yield all([
@@ -17,5 +18,6 @@ export default function* rootSaga() {
     patientSaga(),
     appointmentSaga(),
     calendarSaga(),
+    chatSaga(),
   ]);
 }
