@@ -12,6 +12,8 @@ import billingSaga from "../modules/billing/billingSaga";
 import notificationsSaga from "../modules/notifications/notificationsSaga";
 import chatSaga from "../modules/chat/chatSaga";
 
+import offlineSaga from "../modules/offline/offlineSaga";
+
 export default function* rootSaga() {
   yield all([
     authSaga(),
@@ -26,5 +28,10 @@ export default function* rootSaga() {
     billingSaga(),
     notificationsSaga()
     chatSaga(),
+
+    /*
+     * Offline Queue
+     */
+    offlineSaga(),
   ]);
 }

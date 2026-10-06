@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { useSelector } from "react-redux";
 import useAuth from "../../modules/auth/hooks/useAuth";
 import useTenant from "../../modules/tenant/hooks/useTenant";
 
@@ -38,9 +39,30 @@ const TenantName = styled.span`
   color: ${({ theme }) => theme.colors.textSecondary};
 `;
 
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
 const HeaderUser = styled.span`
   font-size: 14px;
   color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+const OfflineBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: ${({ $isOnline, theme }) =>
+    $isOnline ? theme.colors.primary + "22" : "#f59e0b22"};
+  color: ${({ $isOnline }) => ($isOnline ? "#059669" : "#d97706")};
+  border: 1px solid
+    ${({ $isOnline }) => ($isOnline ? "#05966955" : "#d9770655")};
 `;
 
 const MenuButton = styled.button`
@@ -59,6 +81,11 @@ const MenuButton = styled.button`
 function Header({ onMenuClick }) {
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const { isOnline, offlineQueue, isProcessingQueue } = useSelector(
+    (state) => state.offline
+  );
+
+  const queueCount = offlineQueue?.length || 0;
 
   return (
     <HeaderContainer>
@@ -76,9 +103,22 @@ function Header({ onMenuClick }) {
         </HeaderTitleSection>
       </HeaderLeft>
 
-      <HeaderUser>
-        {user?.name || user?.email || "User"}
-      </HeaderUser>
+      <HeaderRight>
+        <OfflineBadge $isOnline={isOnline}>
+          {isOnline ? "Online" : "Offline"}
+          {queueCount > 0 && (
+            <>
+              {" · "}
+              Queue: {queueCount}
+              {isProcessingQueue ? " (syncing…)" : ""}
+            </>
+          )}
+        </OfflineBadge>
+
+        <HeaderUser>
+          {user?.name || user?.email || "User"}
+        </HeaderUser>
+      </HeaderRight>
     </HeaderContainer>
   );
 }
