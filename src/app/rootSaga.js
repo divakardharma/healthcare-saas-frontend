@@ -24,7 +24,7 @@ export default function* rootSaga() {
     prescriptionSaga(),
     staffSaga(),
     billingSaga(),
-    notificationsSaga()
-    chatSaga(),
+    notificationsSaga(),
+    chatSaga()
   ]);
 }
