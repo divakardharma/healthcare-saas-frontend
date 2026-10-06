@@ -42,22 +42,24 @@ function Input({
   disabled = false,
   required = false,
   autoComplete,
+  ...props
 }) {
   return (
     <InputWrapper>
       {label && <Label htmlFor={name}>{label}</Label>}
 
-      <StyledInput
-        id={name}
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        disabled={disabled}
-        required={required}
-        autoComplete={autoComplete}
-      />
+     <StyledInput
+  id={name}
+  name={name}
+  type={type}
+  value={value}
+  onChange={onChange}
+  placeholder={placeholder}
+  disabled={disabled}
+  required={required}
+  autoComplete={autoComplete}
+  {...props}
+/>
     </InputWrapper>
   );
 }

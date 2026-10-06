@@ -4,7 +4,9 @@ import useAuth from "../../modules/auth/hooks/useAuth";
 
 const SidebarContainer = styled.aside`
   width: 240px;
-  min-height: 100vh;
+  flex: none;
+  height: 100%;
+  overflow-y: auto;
   background: ${({ theme }) => theme.colors.surface};
   border-right: 1px solid ${({ theme }) => theme.colors.border};
   padding: 20px;
