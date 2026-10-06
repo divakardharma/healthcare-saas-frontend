@@ -11,31 +11,25 @@ import appointmentReducer from "../modules/appointments/appointmentSlice";
 import calendarReducer from "../modules/calendar/calendarSlice";
 import chatReducer from "../modules/chat/chatSlice";
 
-import offlineReducer from "../modules/offline/offlineSlice";
+import dashboardReducer from "../modules/dashboard/dashboardSlice";
+import prescriptionReducer from "../modules/prescription/prescriptionSlice";
+import staffReducer from "../modules/staff/staffSlice";
+import billingReducer from "../modules/billing/billingSlice";
+import notificationsReducer from "../modules/notifications/notificationsSlice";
 
-const rootReducer =
-  combineReducers({
-    auth: authReducer,
-
-    tenant: tenantReducer,
-
-    users: userReducer,
-
-    patients: patientReducer,
-
-    appointments:
-      appointmentReducer,
-
-    calendar:
-      calendarReducer,
-
-    chat: chatReducer,
-
-    /*
-     * Offline Queue
-     */
-    offline:
-      offlineReducer,
-  });
+const rootReducer = combineReducers({
+  auth: authReducer,
+  tenant: tenantReducer,
+  users: userReducer,
+  patients: patientReducer,
+  appointments: appointmentReducer,
+  calendar: calendarReducer,
+  dashboard: dashboardReducer,
+  prescription: prescriptionReducer,
+  staff: staffReducer,
+  billing: billingReducer,
+  notifications: notificationsReducer,
+  chat: chatReducer,
+});
 
 export default rootReducer;
