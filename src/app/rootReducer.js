@@ -1,4 +1,6 @@
-import { combineReducers } from "@reduxjs/toolkit";
+import {
+  combineReducers,
+} from "@reduxjs/toolkit";
 
 import authReducer from "../modules/auth/authSlice";
 import tenantReducer from "../modules/tenant/tenantSlice";
@@ -9,15 +11,31 @@ import appointmentReducer from "../modules/appointments/appointmentSlice";
 import calendarReducer from "../modules/calendar/calendarSlice";
 import chatReducer from "../modules/chat/chatSlice";
 
-const rootReducer = combineReducers({
-  auth: authReducer,
-  tenant: tenantReducer,
+import offlineReducer from "../modules/offline/offlineSlice";
 
-  users: userReducer,
-  patients: patientReducer,
-  appointments: appointmentReducer,
-  calendar: calendarReducer,
-  chat: chatReducer,
-});
+const rootReducer =
+  combineReducers({
+    auth: authReducer,
+
+    tenant: tenantReducer,
+
+    users: userReducer,
+
+    patients: patientReducer,
+
+    appointments:
+      appointmentReducer,
+
+    calendar:
+      calendarReducer,
+
+    chat: chatReducer,
+
+    /*
+     * Offline Queue
+     */
+    offline:
+      offlineReducer,
+  });
 
 export default rootReducer;

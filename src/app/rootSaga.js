@@ -9,6 +9,8 @@ import appointmentSaga from "../modules/appointments/appointmentSaga";
 import calendarSaga from "../modules/calendar/calendarSaga";
 import chatSaga from "../modules/chat/chatSaga";
 
+import offlineSaga from "../modules/offline/offlineSaga";
+
 export default function* rootSaga() {
   yield all([
     authSaga(),
@@ -19,5 +21,10 @@ export default function* rootSaga() {
     appointmentSaga(),
     calendarSaga(),
     chatSaga(),
+
+    /*
+     * Offline Queue
+     */
+    offlineSaga(),
   ]);
 }
