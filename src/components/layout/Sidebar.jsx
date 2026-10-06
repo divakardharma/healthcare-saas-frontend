@@ -184,6 +184,20 @@ function Sidebar({ isOpen, onClose }) {
             Staff
           </SidebarLink>
 
+          {/* Staff Chat */}
+          {hasRole([
+            "Admin",
+            "Provider",
+            "Nurse",
+          ]) && (
+            <SidebarLink
+              to="/chat"
+              onClick={onClose}
+            >
+              Chat
+            </SidebarLink>
+          )}
+
           {/* Module 2 - User & Role Management */}
           {hasRole(["Admin"]) && (
             <SidebarLink
