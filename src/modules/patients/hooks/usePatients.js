@@ -20,9 +20,6 @@ export default function usePatients() {
     (store) => store.patients
   );
 
-  // fetchPatients()            -> batch 1
-  // fetchPatients(2)           -> batch 2
-  // fetchPatients(2, { prefetch: true }) -> background request for batch 2
   const fetchPatients = useCallback(
     (page = 1, options = {}) =>
       dispatch(fetchPatientsRequest(page, options)),

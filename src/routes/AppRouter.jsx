@@ -64,6 +64,13 @@ const AppointmentCalendar = lazy(
     )
 );
 
+const ChatPage = lazy(
+  () =>
+    import(
+      "../pages/Chat/ChatPage"
+    )
+);
+
 function Protected({ children }) {
   return (
     <ProtectedRoute>
@@ -167,6 +174,15 @@ function AppRouter() {
             element={
               <Protected>
                 <AppointmentCalendar />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/chat"
+            element={
+              <Protected>
+                <ChatPage />
               </Protected>
             }
           />
