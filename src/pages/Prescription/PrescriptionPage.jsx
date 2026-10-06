@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { usePrescription } from "../../modules/prescription/hooks/usePrescription";
+import useAuth from "../../modules/auth/hooks/useAuth";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 
 const emptyMedicine = {
@@ -10,6 +11,14 @@ const emptyMedicine = {
   quantity: ""
 };
 
+const emptyForm = {
+  patient_id: "",
+  provider_id: "",
+  appointment_id: "",
+  notes: "",
+  items: [{ ...emptyMedicine }]
+};
+
 function PrescriptionPage() {
   const {
     prescriptions,
@@ -17,23 +26,45 @@ function PrescriptionPage() {
     error,
     loadPrescriptions,
     addPrescription,
+    editPrescription,
     removePrescription,
     changePrescriptionStatus
   } = usePrescription();
 
+  const { user } = useAuth();
+
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [viewPrescription, setViewPrescription] = useState(null);
-  const [formData, setFormData] = useState({
-    patient_id: "",
-    provider_id: "",
-    appointment_id: "",
-    notes: "",
-    items: [{ ...emptyMedicine }]
-  });
+  const [formData, setFormData] = useState(emptyForm);
+
+  const userRoles = user?.roles || [];
+
+  const isAdmin = userRoles.includes("Admin");
+  const isProvider = userRoles.includes("Provider");
+  const isPharmacist = userRoles.includes("Pharmacist");
+
+  const canCreate = isAdmin || isProvider;
+  const canEdit = isAdmin || isProvider;
+  const canDelete = isAdmin || isProvider;
+  const canChangeStatus = isAdmin || isPharmacist;
 
   useEffect(() => {
     loadPrescriptions();
   }, []);
+
+  const resetForm = () => {
+    setFormData({
+      patient_id: "",
+      provider_id: "",
+      appointment_id: "",
+      notes: "",
+      items: [{ ...emptyMedicine }]
+    });
+
+    setEditingId(null);
+    setShowForm(false);
+  };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -63,7 +94,12 @@ function PrescriptionPage() {
   const addMedicine = () => {
     setFormData((prev) => ({
       ...prev,
-      items: [...prev.items, { ...emptyMedicine }]
+      items: [
+        ...prev.items,
+        {
+          ...emptyMedicine
+        }
+      ]
     }));
   };
 
@@ -74,11 +110,13 @@ function PrescriptionPage() {
 
     setFormData((prev) => ({
       ...prev,
-      items: prev.items.filter((_, itemIndex) => itemIndex !== index)
+      items: prev.items.filter(
+        (_, itemIndex) => itemIndex !== index
+      )
     }));
   };
 
-  const handleCreate = (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
 
     const data = {
@@ -97,27 +135,77 @@ function PrescriptionPage() {
       }))
     };
 
-    addPrescription(data);
+    if (editingId) {
+      editPrescription(editingId, data);
+    } else {
+      addPrescription(data);
+    }
+
+    resetForm();
+
+    setTimeout(() => {
+      loadPrescriptions();
+    }, 500);
+  };
+
+  const handleEdit = (prescription) => {
+    if (!canEdit) {
+      return;
+    }
+
+    setEditingId(prescription.id);
 
     setFormData({
-      patient_id: "",
-      provider_id: "",
-      appointment_id: "",
-      notes: "",
-      items: [{ ...emptyMedicine }]
+      patient_id: prescription.patient_id || "",
+      provider_id: prescription.provider_id || "",
+      appointment_id: prescription.appointment_id || "",
+      notes: prescription.notes || "",
+      items:
+        prescription.items?.length > 0
+          ? prescription.items.map((item) => ({
+              medicine_id: item.medicine_id || "",
+              dosage: item.dosage || "",
+              frequency: item.frequency || "",
+              duration: item.duration || "",
+              quantity: item.quantity || ""
+            }))
+          : [{ ...emptyMedicine }]
     });
 
-    setShowForm(false);
+    setViewPrescription(null);
+    setShowForm(true);
   };
 
   const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this prescription?")) {
+    if (!canDelete) {
+      return;
+    }
+
+    if (
+      window.confirm(
+        "Are you sure you want to delete this prescription?"
+      )
+    ) {
       removePrescription(id);
+
+      setTimeout(() => {
+        loadPrescriptions();
+      }, 500);
     }
   };
 
   const handleStatusChange = (id, status) => {
-    changePrescriptionStatus(id, { status });
+    if (!canChangeStatus) {
+      return;
+    }
+
+    changePrescriptionStatus(id, {
+      status
+    });
+
+    setTimeout(() => {
+      loadPrescriptions();
+    }, 500);
   };
 
   return (
@@ -325,9 +413,15 @@ function PrescriptionPage() {
             padding: 6px 8px;
           }
 
+          .status-text {
+            font-weight: 600;
+            color: #374151;
+          }
+
           .action-buttons {
             display: flex;
             gap: 7px;
+            flex-wrap: wrap;
           }
 
           .action-button {
@@ -347,6 +441,11 @@ function PrescriptionPage() {
           .delete-button {
             background: #fee2e2;
             color: #b91c1c;
+          }
+
+          .edit-button {
+            background: #fef3c7;
+            color: #92400e;
           }
 
           .loading-message,
@@ -378,10 +477,17 @@ function PrescriptionPage() {
 
           .item-list {
             margin: 8px 0 0 140px;
+            padding-left: 20px;
           }
 
           .item-list li {
-            margin-bottom: 6px;
+            margin-bottom: 10px;
+          }
+
+          .medicine-detail {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(150px, 1fr));
+            gap: 4px 20px;
           }
 
           @media (max-width: 900px) {
@@ -398,40 +504,75 @@ function PrescriptionPage() {
             }
 
             .form-grid,
-            .medicine-grid {
+            .medicine-grid,
+            .medicine-detail {
               grid-template-columns: 1fr;
             }
 
             .full-width {
               grid-column: auto;
             }
+
+            .view-row {
+              flex-direction: column;
+              gap: 4px;
+            }
+
+            .item-list {
+              margin-left: 0;
+            }
           }
         `}</style>
 
         <div className="prescription-header">
           <div>
-            <h1 className="prescription-title">Prescriptions</h1>
+            <h1 className="prescription-title">
+              Prescriptions
+            </h1>
+
             <p className="prescription-subtitle">
               Manage patient prescriptions and pharmacy status
             </p>
           </div>
 
-          <button
-            className="add-button"
-            onClick={() => setShowForm(!showForm)}
-          >
-            {showForm ? "Close Form" : "+ Create Prescription"}
-          </button>
+          {canCreate && (
+            <button
+              className="add-button"
+              onClick={() => {
+                if (showForm) {
+                  resetForm();
+                } else {
+                  setEditingId(null);
+                  setFormData({
+                    ...emptyForm,
+                    items: [{ ...emptyMedicine }]
+                  });
+                  setShowForm(true);
+                }
+              }}
+            >
+              {showForm
+                ? "Close Form"
+                : "+ Create Prescription"}
+            </button>
+          )}
         </div>
 
-        {showForm && (
+        {showForm && canCreate && (
           <div className="prescription-card">
-            <h2 className="form-title">Create Prescription</h2>
+            <h2 className="form-title">
+              {editingId
+                ? "Edit Prescription"
+                : "Create Prescription"}
+            </h2>
 
-            <form onSubmit={handleCreate}>
+            <form onSubmit={handleSubmit}>
               <div className="form-grid">
                 <div className="form-group">
-                  <label className="form-label">Patient ID</label>
+                  <label className="form-label">
+                    Patient ID
+                  </label>
+
                   <input
                     className="form-input"
                     type="number"
@@ -443,7 +584,10 @@ function PrescriptionPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Provider ID</label>
+                  <label className="form-label">
+                    Provider ID
+                  </label>
+
                   <input
                     className="form-input"
                     type="number"
@@ -455,7 +599,10 @@ function PrescriptionPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Appointment ID</label>
+                  <label className="form-label">
+                    Appointment ID
+                  </label>
+
                   <input
                     className="form-input"
                     type="number"
@@ -466,7 +613,10 @@ function PrescriptionPage() {
                 </div>
 
                 <div className="form-group full-width">
-                  <label className="form-label">Notes</label>
+                  <label className="form-label">
+                    Notes
+                  </label>
+
                   <textarea
                     className="form-textarea"
                     name="notes"
@@ -479,7 +629,9 @@ function PrescriptionPage() {
 
               <div className="medicine-section">
                 <div className="medicine-header">
-                  <h3 className="medicine-title">Medicines</h3>
+                  <h3 className="medicine-title">
+                    Medicines
+                  </h3>
 
                   <button
                     type="button"
@@ -491,31 +643,46 @@ function PrescriptionPage() {
                 </div>
 
                 {formData.items.map((item, index) => (
-                  <div className="medicine-card" key={index}>
+                  <div
+                    className="medicine-card"
+                    key={`${item.medicine_id}-${index}`}
+                  >
                     <div className="medicine-grid">
                       <div className="form-group">
-                        <label className="form-label">Medicine ID</label>
+                        <label className="form-label">
+                          Medicine ID
+                        </label>
+
                         <input
                           className="form-input"
                           type="number"
                           name="medicine_id"
                           value={item.medicine_id}
                           onChange={(event) =>
-                            handleMedicineChange(index, event)
+                            handleMedicineChange(
+                              index,
+                              event
+                            )
                           }
                           required
                         />
                       </div>
 
                       <div className="form-group">
-                        <label className="form-label">Dosage</label>
+                        <label className="form-label">
+                          Dosage
+                        </label>
+
                         <input
                           className="form-input"
                           type="text"
                           name="dosage"
                           value={item.dosage}
                           onChange={(event) =>
-                            handleMedicineChange(index, event)
+                            handleMedicineChange(
+                              index,
+                              event
+                            )
                           }
                           placeholder="500mg"
                           required
@@ -523,14 +690,20 @@ function PrescriptionPage() {
                       </div>
 
                       <div className="form-group">
-                        <label className="form-label">Frequency</label>
+                        <label className="form-label">
+                          Frequency
+                        </label>
+
                         <input
                           className="form-input"
                           type="text"
                           name="frequency"
                           value={item.frequency}
                           onChange={(event) =>
-                            handleMedicineChange(index, event)
+                            handleMedicineChange(
+                              index,
+                              event
+                            )
                           }
                           placeholder="Twice daily"
                           required
@@ -538,14 +711,20 @@ function PrescriptionPage() {
                       </div>
 
                       <div className="form-group">
-                        <label className="form-label">Duration</label>
+                        <label className="form-label">
+                          Duration
+                        </label>
+
                         <input
                           className="form-input"
                           type="text"
                           name="duration"
                           value={item.duration}
                           onChange={(event) =>
-                            handleMedicineChange(index, event)
+                            handleMedicineChange(
+                              index,
+                              event
+                            )
                           }
                           placeholder="5 days"
                           required
@@ -553,14 +732,20 @@ function PrescriptionPage() {
                       </div>
 
                       <div className="form-group">
-                        <label className="form-label">Quantity</label>
+                        <label className="form-label">
+                          Quantity
+                        </label>
+
                         <input
                           className="form-input"
                           type="number"
                           name="quantity"
                           value={item.quantity}
                           onChange={(event) =>
-                            handleMedicineChange(index, event)
+                            handleMedicineChange(
+                              index,
+                              event
+                            )
                           }
                           min="1"
                           required
@@ -572,7 +757,9 @@ function PrescriptionPage() {
                       <button
                         type="button"
                         className="remove-medicine-button"
-                        onClick={() => removeMedicine(index)}
+                        onClick={() =>
+                          removeMedicine(index)
+                        }
                       >
                         Remove Medicine
                       </button>
@@ -582,14 +769,22 @@ function PrescriptionPage() {
               </div>
 
               <div className="form-actions">
-                <button className="save-button" type="submit">
-                  Create Prescription
+                <button
+                  className="save-button"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading
+                    ? "Saving..."
+                    : editingId
+                    ? "Update Prescription"
+                    : "Create Prescription"}
                 </button>
 
                 <button
                   type="button"
                   className="cancel-button"
-                  onClick={() => setShowForm(false)}
+                  onClick={resetForm}
                 >
                   Cancel
                 </button>
@@ -611,127 +806,250 @@ function PrescriptionPage() {
             </p>
           )}
 
-          {!loading && !error && prescriptions.length === 0 && (
-            <p className="empty-message">
-              No prescriptions found.
-            </p>
-          )}
+          {!loading &&
+            !error &&
+            prescriptions.length === 0 && (
+              <p className="empty-message">
+                No prescriptions found.
+              </p>
+            )}
 
-          {!loading && !error && prescriptions.length > 0 && (
-            <div className="table-wrapper">
-              <table className="prescription-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Patient</th>
-                    <th>Provider</th>
-                    <th>Status</th>
-                    <th>Notes</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {prescriptions.map((prescription) => (
-                    <tr key={prescription.id}>
-                      <td>{prescription.id}</td>
-                      <td>{prescription.patient_id}</td>
-                      <td>{prescription.provider_id}</td>
-                      <td>
-                        <select
-                          className="status-select"
-                          value={prescription.status || "Pending"}
-                          onChange={(event) =>
-                            handleStatusChange(
-                              prescription.id,
-                              event.target.value
-                            )
-                          }
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="Verified">Verified</option>
-                          <option value="Dispensed">Dispensed</option>
-                          <option value="Cancelled">Cancelled</option>
-                        </select>
-                      </td>
-                      <td>{prescription.notes || "-"}</td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className="action-button view-button"
-                            onClick={() =>
-                              setViewPrescription(prescription)
-                            }
-                          >
-                            View
-                          </button>
-
-                          <button
-                            className="action-button delete-button"
-                            onClick={() =>
-                              handleDelete(prescription.id)
-                            }
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
+          {!loading &&
+            !error &&
+            prescriptions.length > 0 && (
+              <div className="table-wrapper">
+                <table className="prescription-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Patient</th>
+                      <th>Provider</th>
+                      <th>Status</th>
+                      <th>Notes</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+
+                  <tbody>
+                    {prescriptions.map((prescription) => (
+                      <tr key={prescription.id}>
+                        <td>{prescription.id}</td>
+
+                        <td>
+                          {prescription.patient_id}
+                        </td>
+
+                        <td>
+                          {prescription.provider_id}
+                        </td>
+
+                        <td>
+                          {canChangeStatus ? (
+                            <select
+                              className="status-select"
+                              value={
+                                prescription.status ||
+                                "Pending"
+                              }
+                              onChange={(event) =>
+                                handleStatusChange(
+                                  prescription.id,
+                                  event.target.value
+                                )
+                              }
+                              disabled={loading}
+                            >
+                              <option value="Pending">
+                                Pending
+                              </option>
+
+                              <option value="Verified">
+                                Verified
+                              </option>
+
+                              <option value="Dispensed">
+                                Dispensed
+                              </option>
+
+                              <option value="Cancelled">
+                                Cancelled
+                              </option>
+                            </select>
+                          ) : (
+                            <span className="status-text">
+                              {prescription.status ||
+                                "Pending"}
+                            </span>
+                          )}
+                        </td>
+
+                        <td>
+                          {prescription.notes || "-"}
+                        </td>
+
+                        <td>
+                          <div className="action-buttons">
+                            <button
+                              className="action-button view-button"
+                              onClick={() =>
+                                setViewPrescription(
+                                  prescription
+                                )
+                              }
+                            >
+                              View
+                            </button>
+
+                            {canEdit && (
+                              <button
+                                className="action-button edit-button"
+                                onClick={() =>
+                                  handleEdit(
+                                    prescription
+                                  )
+                                }
+                              >
+                                Edit
+                              </button>
+                            )}
+
+                            {canDelete && (
+                              <button
+                                className="action-button delete-button"
+                                onClick={() =>
+                                  handleDelete(
+                                    prescription.id
+                                  )
+                                }
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
         </div>
 
         {viewPrescription && (
           <div className="prescription-card">
-            <h2 className="form-title">Prescription Details</h2>
+            <h2 className="form-title">
+              Prescription Details
+            </h2>
 
             <div className="view-row">
-              <span className="view-label">ID:</span>
-              <span>{viewPrescription.id}</span>
+              <span className="view-label">
+                ID:
+              </span>
+
+              <span>
+                {viewPrescription.id}
+              </span>
             </div>
 
             <div className="view-row">
-              <span className="view-label">Patient ID:</span>
-              <span>{viewPrescription.patient_id}</span>
+              <span className="view-label">
+                Patient ID:
+              </span>
+
+              <span>
+                {viewPrescription.patient_id}
+              </span>
             </div>
 
             <div className="view-row">
-              <span className="view-label">Provider ID:</span>
-              <span>{viewPrescription.provider_id}</span>
+              <span className="view-label">
+                Provider ID:
+              </span>
+
+              <span>
+                {viewPrescription.provider_id}
+              </span>
             </div>
 
             <div className="view-row">
-              <span className="view-label">Status:</span>
-              <span>{viewPrescription.status || "Pending"}</span>
+              <span className="view-label">
+                Status:
+              </span>
+
+              <span>
+                {viewPrescription.status ||
+                  "Pending"}
+              </span>
             </div>
 
             <div className="view-row">
-              <span className="view-label">Notes:</span>
-              <span>{viewPrescription.notes || "-"}</span>
+              <span className="view-label">
+                Notes:
+              </span>
+
+              <span>
+                {viewPrescription.notes || "-"}
+              </span>
             </div>
 
             {viewPrescription.items?.length > 0 && (
               <div className="view-row">
-                <span className="view-label">Medicines:</span>
+                <span className="view-label">
+                  Medicines:
+                </span>
 
                 <ul className="item-list">
-                  {viewPrescription.items.map((item, index) => (
-                    <li key={index}>
-                      Medicine ID: {item.medicine_id} |{" "}
-                      {item.dosage} | {item.frequency} |{" "}
-                      {item.duration} | Quantity: {item.quantity}
-                    </li>
-                  ))}
+                  {viewPrescription.items.map(
+                    (item, index) => (
+                      <li key={`${item.medicine_id}-${index}`}>
+                        <div className="medicine-detail">
+                          <span>
+                            <strong>
+                              Medicine ID:
+                            </strong>{" "}
+                            {item.medicine_id}
+                          </span>
+
+                          <span>
+                            <strong>
+                              Dosage:
+                            </strong>{" "}
+                            {item.dosage}
+                          </span>
+
+                          <span>
+                            <strong>
+                              Frequency:
+                            </strong>{" "}
+                            {item.frequency}
+                          </span>
+
+                          <span>
+                            <strong>
+                              Duration:
+                            </strong>{" "}
+                            {item.duration}
+                          </span>
+
+                          <span>
+                            <strong>
+                              Quantity:
+                            </strong>{" "}
+                            {item.quantity}
+                          </span>
+                        </div>
+                      </li>
+                    )
+                  )}
                 </ul>
               </div>
             )}
 
             <button
               className="cancel-button"
-              onClick={() => setViewPrescription(null)}
+              onClick={() =>
+                setViewPrescription(null)
+              }
             >
               Close
             </button>

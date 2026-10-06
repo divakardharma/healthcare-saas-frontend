@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { Loader } from "../components/common";
 import ProtectedRoute from "./ProtectedRoute";
+import RoleBasedRoute from "./RoleBasedRoute";
 
 const LoginPage = lazy(() => import("../pages/Auth/LoginPage"));
 const RegisterPage = lazy(() => import("../pages/Auth/RegisterPage"));
@@ -17,6 +18,7 @@ const PatientList = lazy(() => import("../pages/Patients/PatientList"));
 const PatientProfile = lazy(() => import("../pages/Patients/PatientProfile"));
 const AppointmentList = lazy(() => import("../pages/Appointments/AppointmentList"));
 const AppointmentCalendar = lazy(() => import("../pages/Appointments/AppointmentCalendar"));
+const StaffPage = lazy(() => import("../pages/Staff/StaffPage"));
 
 function Protected({ children }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
@@ -55,6 +57,14 @@ function AppRouter() {
               </Protected>
             }
           />
+<Route
+  path="/staff"
+  element={
+    <RoleBasedRoute allowedRoles={["Admin"]}>
+      <StaffPage />
+    </RoleBasedRoute>
+  }
+/>
           <Route
             path="/users"
             element={

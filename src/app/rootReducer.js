@@ -10,6 +10,7 @@ import calendarReducer from "../modules/calendar/calendarSlice";
 
 import dashboardReducer from "../modules/dashboard/dashboardSlice";
 import prescriptionReducer from "../modules/prescription/prescriptionSlice";
+import staffReducer from "../modules/staff/staffSlice";
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -19,7 +20,8 @@ const rootReducer = combineReducers({
   appointments: appointmentReducer,
   calendar: calendarReducer,
   dashboard: dashboardReducer,
-  prescription: prescriptionReducer
+  prescription: prescriptionReducer,
+  staff: staffReducer,
 });
 
 export default rootReducer;
