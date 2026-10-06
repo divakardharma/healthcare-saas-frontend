@@ -1,4 +1,6 @@
-import { combineReducers } from "@reduxjs/toolkit";
+import {
+  combineReducers,
+} from "@reduxjs/toolkit";
 
 import authReducer from "../modules/auth/authSlice";
 import tenantReducer from "../modules/tenant/tenantSlice";

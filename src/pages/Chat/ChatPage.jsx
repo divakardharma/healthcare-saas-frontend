@@ -243,7 +243,7 @@ const ThreeDotsBtn = styled.button`
     width: 24px;
     height: 24px;
     font-size: 14px;
-    opacity: 1; /* always visible on mobile */
+    opacity: 1;
   }
 `;
 
@@ -384,8 +384,10 @@ const DeleteMenuCancel = styled.button`
 
 function formatTime(value) {
   if (!value) return "";
+
   try {
     const d = new Date(value);
+
     return d.toLocaleString(undefined, {
       month: "short",
       day: "numeric",
@@ -417,6 +419,17 @@ function ChatPage() {
     deleteMessage,
   } = useChat();
 
+  // Only Admin, Provider, and Nurse can appear in Staff Chat.
+  const chatUsers = users
+    .filter((u) => myId == null || Number(u.id) !== Number(myId))
+    .filter(
+      (u) =>
+        Array.isArray(u.roles) &&
+        u.roles.some((role) =>
+          ["Admin", "Provider", "Nurse"].includes(role)
+        )
+    );
+
   const [text, setText] = useState("");
   const [menuMessage, setMenuMessage] = useState(null);
   const bottomRef = useRef(null);
@@ -439,8 +452,11 @@ function ChatPage() {
 
   const handleSend = (e) => {
     e.preventDefault();
+
     const trimmed = text.trim();
+
     if (!trimmed || !selectedUserId || sending) return;
+
     sendMessage(selectedUserId, trimmed);
     setText("");
   };
@@ -456,12 +472,21 @@ function ChatPage() {
 
   const handleDelete = (deleteType) => {
     if (!menuMessage) return;
-    deleteMessage(menuMessage.id, deleteType, selectedUserId);
+
+    deleteMessage(
+      menuMessage.id,
+      deleteType,
+      selectedUserId
+    );
+
     closeDeleteMenu();
   };
 
   const isMyMessage = (message) => {
-    return myId != null && Number(message.sender_user_id) === Number(myId);
+    return (
+      myId != null &&
+      Number(message.sender_user_id) === Number(myId)
+    );
   };
 
   return (
@@ -472,6 +497,7 @@ function ChatPage() {
         <ChatShell>
           <UserList $hasSelection={!!selectedUserId}>
             <UserListHeader>Staff</UserListHeader>
+
             <UserListBody>
               {loadingUsers && (
                 <div style={{ padding: 24 }}>
@@ -479,46 +505,56 @@ function ChatPage() {
                 </div>
               )}
 
-              {!loadingUsers && users.length === 0 && (
+              {!loadingUsers && chatUsers.length === 0 && (
                 <div style={{ padding: 16 }}>
                   <EmptyState message="No staff available to chat" />
                 </div>
               )}
 
               {!loadingUsers &&
-                users
-                  .filter((u) => myId == null || Number(u.id) !== Number(myId))
-                  .map((u) => (
-                    <UserItem
-                      key={u.id}
-                      type="button"
-                      $active={selectedUserId === u.id}
-                      onClick={() => handleSelect(u.id)}
-                    >
-                      <UserName>{u.name || `User #${u.id}`}</UserName>
-                      <UserRoles>
-                        {Array.isArray(u.roles) && u.roles.length
-                          ? u.roles.join(", ")
-                          : "Staff"}
-                      </UserRoles>
-                    </UserItem>
-                  ))}
+                chatUsers.map((u) => (
+                  <UserItem
+                    key={u.id}
+                    type="button"
+                    $active={selectedUserId === u.id}
+                    onClick={() => handleSelect(u.id)}
+                  >
+                    <UserName>
+                      {u.name || `User #${u.id}`}
+                    </UserName>
+
+                    <UserRoles>
+                      {Array.isArray(u.roles) && u.roles.length
+                        ? u.roles.join(", ")
+                        : "Staff"}
+                    </UserRoles>
+                  </UserItem>
+                ))}
             </UserListBody>
           </UserList>
 
           <Conversation $hasSelection={!!selectedUserId}>
             {!selectedUserId ? (
-              <Placeholder>Select a staff member to start chatting</Placeholder>
+              <Placeholder>
+                Select a staff member to start chatting
+              </Placeholder>
             ) : (
               <>
                 <ConversationHeader>
-                  <BackButton type="button" onClick={handleBack} aria-label="Back">
+                  <BackButton
+                    type="button"
+                    onClick={handleBack}
+                    aria-label="Back"
+                  >
                     ←
                   </BackButton>
+
                   <div>
                     <div>
-                      {selectedUser?.name || `User #${selectedUserId}`}
+                      {selectedUser?.name ||
+                        `User #${selectedUserId}`}
                     </div>
+
                     {selectedUser?.roles?.length > 0 && (
                       <div
                         style={{
@@ -534,17 +570,24 @@ function ChatPage() {
                 </ConversationHeader>
 
                 {(error || sendError) && (
-                  <ErrorBanner>{error || sendError}</ErrorBanner>
+                  <ErrorBanner>
+                    {error || sendError}
+                  </ErrorBanner>
                 )}
 
                 <MessagesArea>
                   {loadingMessages && <Loader />}
 
-                  {!loadingMessages && messages.length === 0 && (
-                    <Placeholder style={{ background: "transparent" }}>
-                      No messages yet. Say hello.
-                    </Placeholder>
-                  )}
+                  {!loadingMessages &&
+                    messages.length === 0 && (
+                      <Placeholder
+                        style={{
+                          background: "transparent",
+                        }}
+                      >
+                        No messages yet. Say hello.
+                      </Placeholder>
+                    )}
 
                   {!loadingMessages &&
                     messages.map((m) => {
@@ -552,19 +595,29 @@ function ChatPage() {
                       const isDeleted = m.is_deleted;
 
                       return (
-                        <BubbleRow key={m.id} $mine={mine}>
+                        <BubbleRow
+                          key={m.id}
+                          $mine={mine}
+                        >
                           <BubbleWrapper>
-                            <Bubble $mine={mine} $deleted={isDeleted}>
+                            <Bubble
+                              $mine={mine}
+                              $deleted={isDeleted}
+                            >
                               <div>
                                 {isDeleted
                                   ? "This message was deleted"
                                   : m.message}
                               </div>
+
                               <BubbleMeta $mine={mine}>
                                 {!mine && m.sender_name
                                   ? `${m.sender_name} · `
                                   : ""}
-                                {formatTime(m.created_at)}
+
+                                {formatTime(
+                                  m.created_at
+                                )}
                               </BubbleMeta>
                             </Bubble>
 
@@ -572,7 +625,9 @@ function ChatPage() {
                               <ThreeDotsBtn
                                 type="button"
                                 $mine={mine}
-                                onClick={(e) => openDeleteMenu(m, e)}
+                                onClick={(e) =>
+                                  openDeleteMenu(m, e)
+                                }
                                 title="More options"
                               >
                                 ⋮
@@ -582,6 +637,7 @@ function ChatPage() {
                         </BubbleRow>
                       );
                     })}
+
                   <div ref={bottomRef} />
                 </MessagesArea>
 
@@ -590,11 +646,19 @@ function ChatPage() {
                     type="text"
                     placeholder="Type a message…"
                     value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    onChange={(e) =>
+                      setText(e.target.value)
+                    }
                     disabled={sending}
                     autoComplete="off"
                   />
-                  <SendButton type="submit" disabled={sending || !text.trim()}>
+
+                  <SendButton
+                    type="submit"
+                    disabled={
+                      sending || !text.trim()
+                    }
+                  >
                     {sending ? "…" : "Send"}
                   </SendButton>
                 </Composer>
@@ -605,22 +669,45 @@ function ChatPage() {
       </PageWrapper>
 
       {menuMessage && (
-        <DeleteMenuOverlay onClick={closeDeleteMenu}>
-          <DeleteMenu onClick={(e) => e.stopPropagation()}>
-            <DeleteMenuHeader>Delete Message</DeleteMenuHeader>
+        <DeleteMenuOverlay
+          onClick={closeDeleteMenu}
+        >
+          <DeleteMenu
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+            <DeleteMenuHeader>
+              Delete Message
+            </DeleteMenuHeader>
 
-            <DeleteMenuItem $orange onClick={() => handleDelete("me")}>
-              <span>🚫</span> Delete for me
+            <DeleteMenuItem
+              $orange
+              onClick={() =>
+                handleDelete("me")
+              }
+            >
+              <span>🚫</span>
+              Delete for me
             </DeleteMenuItem>
 
             {isMyMessage(menuMessage) && (
-              <DeleteMenuItem $danger onClick={() => handleDelete("everyone")}>
-                <span>🗑️</span> Delete for everyone
+              <DeleteMenuItem
+                $danger
+                onClick={() =>
+                  handleDelete("everyone")
+                }
+              >
+                <span>🗑️</span>
+                Delete for everyone
               </DeleteMenuItem>
             )}
 
-            <DeleteMenuCancel onClick={closeDeleteMenu}>
-              <span>✕</span> Cancel
+            <DeleteMenuCancel
+              onClick={closeDeleteMenu}
+            >
+              <span>✕</span>
+              Cancel
             </DeleteMenuCancel>
           </DeleteMenu>
         </DeleteMenuOverlay>
