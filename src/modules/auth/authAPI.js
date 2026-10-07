@@ -1,5 +1,5 @@
 import axiosClient from "../../services/axiosClient";
-import { encryptData } from "../../services/encryptionService";
+import { encryptData, decryptData } from "../../services/encryptionService";
 import refreshClient from "../../services/refreshClient";
 
 export const getCsrfToken = () => {
@@ -19,4 +19,17 @@ export const refreshTokenAPI = () =>
 
 export const logoutAPI = () => {
   return axiosClient.post("/logout");
+};
+export const changePassword = async ({
+  current_password,
+  new_password,
+}) => {
+  const response = await axiosClient.post("/change-password", {
+    payload: encryptData({
+      current_password,
+      new_password,
+    }),
+  });
+
+  return decryptData(response.data.payload);
 };

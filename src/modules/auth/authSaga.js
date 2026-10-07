@@ -1,5 +1,5 @@
 import { call, put, takeLatest } from "redux-saga/effects";
-import { loginAPI, refreshTokenAPI , logoutAPI,  getCsrfToken,} from "./authAPI";
+import { loginAPI, refreshTokenAPI , logoutAPI, changePassword, getCsrfToken,} from "./authAPI";
 import {
   loginRequest,
   loginSuccess,
@@ -27,7 +27,7 @@ function* handleLogin(action) {
     // Access token store
     tokenService.setAccessToken(access_token);
 
-    // Login success-la backend rotate panna new CSRF token store
+    // Login success backend rotate new CSRF token store
     tokenService.setCsrfToken(csrf_token);
 
     // Redux state update
@@ -115,11 +115,30 @@ function* handleLogout() {
   }
 }
 
+function* changePasswordSaga(action) {
+  try {
+    yield call(changePassword, action.payload);
+
+    yield put({
+      type: "auth/changePasswordSuccess",
+    });
+  } catch (error) {
+    yield put({
+      type: "auth/changePasswordFailure",
+      payload:
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to change password",
+    });
+  }
+}
+
 
 function* authSaga() {
   yield takeLatest(loginRequest.type, handleLogin);
   yield takeLatest(refreshRequest.type, handleRefresh);
   yield takeLatest(logoutRequest.type, handleLogout);
+  yield takeLatest("auth/changePasswordRequest", changePasswordSaga);
 }
 
 export default authSaga;

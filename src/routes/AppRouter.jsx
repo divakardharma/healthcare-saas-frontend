@@ -8,6 +8,7 @@ import {
 import { Loader } from "../components/common";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleBasedRoute from "./RoleBasedRoute";
+import ChangePassword from "../pages/Settings/ChangePassword";
 
 const LoginPage = lazy(() => import("../pages/Auth/LoginPage"));
 const RegisterPage = lazy(() => import("../pages/Auth/RegisterPage"));
@@ -60,14 +61,14 @@ function AppRouter() {
               </Protected>
             }
           />
-          <Route
-            path="/prescriptions"
-            element={
-              <Protected>
-                <PrescriptionPage />
-              </Protected>
-            }
-          />
+         <Route
+  path="/prescriptions"
+  element={
+    <RoleBasedRoute allowedRoles={["Provider", "Pharmacist"]}>
+      <PrescriptionPage />
+    </RoleBasedRoute>
+  }
+/>
 <Route
   path="/staff"
   element={
@@ -104,6 +105,10 @@ function AppRouter() {
             }
           />
           <Route
+  path="/settings/change-password"
+  element={<ChangePassword />}
+/>
+          <Route
             path="/settings"
             element={
               <Protected>
@@ -136,13 +141,13 @@ function AppRouter() {
             }
           />
           <Route
-            path="/appointments"
-            element={
-              <Protected>
-                <AppointmentList />
-              </Protected>
-            }
-          />
+  path="/appointments"
+  element={
+    <RoleBasedRoute allowedRoles={["Provider", "Nurse"]}>
+      <AppointmentList />
+    </RoleBasedRoute>
+  }
+/>
           <Route
             path="/calendar"
             element={

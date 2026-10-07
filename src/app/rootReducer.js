@@ -17,6 +17,8 @@ import staffReducer from "../modules/staff/staffSlice";
 import billingReducer from "../modules/billing/billingSlice";
 import notificationsReducer from "../modules/notifications/notificationsSlice";
 
+import offlineReducer from "../modules/offline/offlineSlice";
+
 const rootReducer = combineReducers({
   auth: authReducer,
   tenant: tenantReducer,
@@ -30,6 +32,7 @@ const rootReducer = combineReducers({
   billing: billingReducer,
   notifications: notificationsReducer,
   chat: chatReducer,
+  offline: offlineReducer,
 });
 
 export default rootReducer;

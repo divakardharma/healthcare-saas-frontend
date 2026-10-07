@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTheme } from "styled-components";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuth from "../../modules/auth/hooks/useAuth";
 import useBilling from "../../modules/billing/hooks/useBilling";
@@ -8,6 +9,7 @@ import {
 } from "../../modules/billing/billingAPI";
 
 const BillingPage = () => {
+  const theme = useTheme();
   const { user } = useAuth();
 const [patients, setPatients] = useState([]);
 const [appointments, setAppointments] = useState([]);
@@ -164,7 +166,13 @@ const [appointments, setAppointments] = useState([]);
 
   return (
     <DashboardLayout>
-      <div className="billing-page">
+      <div
+  className="billing-page"
+  style={{
+    "--primary-color": theme.colors.primary,
+    "--primary-hover": theme.colors.primaryHover
+  }}
+>
         <div className="billing-header">
           <div>
             <h2>Billing & Payment</h2>
@@ -450,10 +458,13 @@ const [appointments, setAppointments] = useState([]);
           font-size: 14px;
         }
 
-        .billing-primary-button {
-          background: #2563eb;
-          color: white;
-        }
+.billing-primary-button {
+  background: var(--primary-color);
+  color: white;
+}
+  .billing-primary-button:hover {
+  background: var(--primary-hover);
+}
 
         .billing-secondary-button {
           background: #e5e7eb;

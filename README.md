@@ -1,70 +1,168 @@
-# Getting Started with Create React App
+# Healthcare Management System
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A multi-tenant healthcare platform. Each clinic gets its own subdomain and its own secure database.
 
-## Available Scripts
+**Stack:** React 19 · Redux Toolkit · Redux Saga · Axios · styled-components · PHP · MySQL · JWT · AES-256
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 1. Architecture
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```mermaid
+flowchart LR
+    U["Users<br/>Admin · Provider · Nurse · Pharmacist · Patient"] --> FE
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+    subgraph FE["Frontend (React)"]
+        P[Pages] --> RG[Route Guard<br/>Login + Role]
+        RG --> ST[Redux Store + Saga]
+        ST --> AX[Axios Client<br/>JWT + CSRF + AES]
+        ST -.-> OF[(Offline Queue<br/>IndexedDB)]
+    end
 
-### `npm test`
+    AX -- "HTTPS<br/>encrypted JSON" --> BE
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+    subgraph BE["Backend (PHP API)"]
+        R[Router] --> MW[Middleware<br/>CSRF · JWT · Tenant · Role]
+        MW --> C[Controllers] --> S[Services] --> RP[Repositories]
+        TR[Tenant Resolver]
+    end
 
-### `npm run build`
+    R --> TR
+    TR --> M[(Master DB)]
+    RP --> T1[(Clinic DB 1)]
+    RP --> T2[(Clinic DB 2)]
+    RP --> TN[(Clinic DB N)]
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+| Layer | Responsibility |
+|---|---|
+| Frontend | UI, state, API calls, offline support |
+| Backend | Security checks, business rules |
+| Master DB | Clinic list, subscriptions, which DB belongs to which clinic |
+| Clinic DB | Users, patients, appointments, prescriptions, billing, chat (one DB per clinic) |
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 2. Request Flow (every click)
 
-### `npm run eject`
+```mermaid
+flowchart LR
+    A[User clicks] --> B[Saga + Axios<br/>add tokens, encrypt]
+    B --> C[Router<br/>decrypt]
+    C --> D[Middleware<br/>4 security checks]
+    D --> E[Controller] --> F[Service] --> G[Repository] --> H[(Clinic DB)]
+    H -. encrypted response .-> A
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+---
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 3. Login Flow
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant S as Backend
+    participant D as Database
+    B->>S: 1. Get CSRF token (page load)
+    B->>S: 2. Login (email + password, encrypted)
+    S->>D: 3. Subdomain → Master DB → connect Clinic DB
+    D-->>S: 4. Verify user (hashed password)
+    S-->>B: 5. Access Token (JWT, memory) + Refresh Token (HttpOnly cookie)
+    B->>S: 6. Token expired → /refresh → new token
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Auto-logout happens when the user is idle.
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 4. Multi-Tenant Design
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```mermaid
+flowchart LR
+    G[gov.heal.com] --> BE[Backend]
+    A[abc.heal.com] --> BE
+    X[xyz.heal.com] --> BE
+    BE --> M[(Master DB<br/>subdomain → DB name)]
+    BE -.-> T1[(heal_tenant_1)]
+    BE -.-> T2[(heal_tenant_2)]
+    BE -.-> T3[(heal_tenant_3)]
+```
 
-### Code Splitting
+- **Signup (`/tenant/register`)**: Master DB entry → new database `heal_tenant_<id>` → tables from `tenant_schema.sql` → first Admin user.
+- **Safety check**: tenant in the URL must match the tenant inside the JWT, otherwise the request is blocked.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+---
 
-### Analyzing the Bundle Size
+## 5. Modules
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```mermaid
+flowchart LR
+    P[Patient] --> AP[Appointment] --> N[Doctor Note] --> PR[Prescription] --> PH[Pharmacy] --> B[Billing]
+```
 
-### Making a Progressive Web App
+Supporting modules: Dashboard · Calendar · Chat · Notifications · Staff · User Management · Tenant Settings
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### Role Access
 
-### Advanced Configuration
+| Page | Admin | Provider | Nurse | Pharmacist |
+|---|:-:|:-:|:-:|:-:|
+| Dashboard, Patients, Appointments | ✅ | ✅ | ✅ | ✅ |
+| Prescriptions | – | ✅ | – | ✅ |
+| Billing | ✅ | ✅ | ✅ | – |
+| Staff | ✅ | – | – | – |
+| Notifications | – | ✅ | – | – |
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+---
 
-### Deployment
+## 6. Security
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+| Feature | What it does |
+|---|---|
+| AES-256 | Encrypts request/response payload and sensitive DB fields |
+| JWT + Refresh Token | Short-lived access token; refresh token in HttpOnly cookie |
+| CSRF Token | Required on every non-GET request |
+| RBAC | Role checked in frontend routes and backend |
+| Tenant Check | URL clinic must match token clinic |
+| Idle Logout | Signs out inactive users |
+| Offline Mode | Changes saved encrypted in IndexedDB, synced when online |
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 7. Folder Structure
+
+```
+healthcare-frontend/src
+├── app/         store, rootReducer, rootSaga
+├── modules/     auth, patients, appointments, billing ... (slice + saga + API + hook)
+├── pages/       screens
+├── routes/      AppRouter, ProtectedRoute, RoleBasedRoute
+├── services/    axiosClient, tokenService, encryptionService
+└── themes/      per-clinic theme
+
+healthcare-api/backend/app
+├── Routes/ · Middleware/ · Controllers/
+├── Services/ · Repositories/
+├── Security/    AES, JWT, CSRF, Hash
+└── Config/      env + master database
+healthcare-api/database   master_schema.sql, tenant_schema.sql
+```
+
+**Pattern:** Frontend `Page → Hook → Slice → Saga → API` · Backend `Route → Controller → Service → Repository → DB`
+
+---
+
+## 8. Setup
+
+```bash
+# Frontend
+cd healthcare-frontend
+npm install
+npm start
+
+# Backend
+cd healthcare-api
+composer install
+# Import database/master_schema.sql into MySQL, then configure backend/.env
+```
+
+Set `REACT_APP_API_PATH` and `REACT_APP_AES_KEY` in the frontend `.env` (the AES key must match the backend `AES_KEY`). Never commit real keys or credentials.

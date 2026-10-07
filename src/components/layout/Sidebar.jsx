@@ -121,6 +121,13 @@ function Sidebar({ isOpen, onClose }) {
           >
             Dashboard
           </SidebarLink>
+{/* 
+          <SidebarLink
+  to="/settings/change-password"
+  onClick={onClose}
+>
+  Change Password
+</SidebarLink> */}
 
           {/* Module 3 - Patient Management */}
           {hasRole([
@@ -163,7 +170,7 @@ function Sidebar({ isOpen, onClose }) {
             )}
 
           {/* Existing modules - untouched */}
-          {hasRole(["Admin", "Provider", "Pharmacist"]) && (
+        {hasRole(["Provider", "Pharmacist"]) && (
             <SidebarLink
               to="/prescriptions"
               onClick={onClose}
