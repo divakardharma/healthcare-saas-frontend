@@ -24,7 +24,7 @@ const logoutUser = () => {
   dispatch(logoutRequest());
 };
 
-return {
+return {   
   user,
   accessToken,
   isAuthenticated,

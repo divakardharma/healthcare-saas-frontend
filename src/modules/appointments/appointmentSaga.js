@@ -262,7 +262,7 @@ function* createAppointment(action) {
       (state) =>
         state.offline?.isOnline
     );
-
+  
   /*
    * Browser is offline.
    *

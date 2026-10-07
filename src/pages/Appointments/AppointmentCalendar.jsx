@@ -1,13 +1,7 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import styled, { css } from "styled-components";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-
 import {
   Button,
   EmptyState,
@@ -15,7 +9,6 @@ import {
   Modal,
   PageHeader,
 } from "../../components/common";
-
 import RoleBasedRoute from "../../routes/RoleBasedRoute";
 import useCalendar from "../../modules/calendar/hooks/useCalendar";
 
@@ -482,14 +475,22 @@ function AppointmentCalendarContent() {
   } = useCalendar();
 
   const rangeInvalid =
-    mode === "range" &&
-    (!startDate || !endDate || startDate > endDate);
+    mode === "range" && (!startDate || !endDate || startDate > endDate);
 
   const load = useCallback(() => {
     if (mode === "day" && date) fetchDay(date);
     if (mode === "range" && !rangeInvalid) fetchRange(startDate, endDate);
     if (mode === "upcoming") fetchUpcoming();
-  }, [mode, date, startDate, endDate, rangeInvalid, fetchDay, fetchRange, fetchUpcoming]);
+  }, [
+    mode,
+    date,
+    startDate,
+    endDate,
+    rangeInvalid,
+    fetchDay,
+    fetchRange,
+    fetchUpcoming,
+  ]);
 
   useEffect(() => {
     load();
@@ -570,203 +571,217 @@ function AppointmentCalendarContent() {
   return (
     <DashboardLayout>
       <Page>
-      <PageHeader
-        title="Calendar"
-        description="Day, range and upcoming appointment views."
-      />
+        <PageHeader
+          title="Calendar"
+          description="Day, range and upcoming appointment views."
+        />
 
-      <Panel>
-        <Top>
-        {/* Row 1: view + dates */}
-        <Bar>
-          <Segmented role="group" aria-label="Calendar view">
-            {MODES.map((m) => (
-              <SegButton
-                key={m.key}
-                type="button"
-                $active={mode === m.key}
-                aria-pressed={mode === m.key}
-                onClick={() => setMode(m.key)}
-              >
-                {m.label}
-              </SegButton>
-            ))}
-          </Segmented>
+        <Panel>
+          <Top>
+            {/* Row 1: view + dates */}
+            <Bar>
+              <Segmented role="group" aria-label="Calendar view">
+                {MODES.map((m) => (
+                  <SegButton
+                    key={m.key}
+                    type="button"
+                    $active={mode === m.key}
+                    aria-pressed={mode === m.key}
+                    onClick={() => setMode(m.key)}
+                  >
+                    {m.label}
+                  </SegButton>
+                ))}
+              </Segmented>
 
-          <Spacer />
+              <Spacer />
 
-          {mode === "day" && (
-            <DateNav>
-              <Arrow
-                type="button"
-                aria-label="Previous day"
-                onClick={() => setDate(addDays(date, -1))}
-              >
-                ‹
-              </Arrow>
-              <DateInput
-                type="date"
-                value={date}
-                aria-label="Pick a date"
-                onChange={(e) => e.target.value && setDate(e.target.value)}
-              />
-              <Arrow
-                type="button"
-                aria-label="Next day"
-                onClick={() => setDate(addDays(date, 1))}
-              >
-                ›
-              </Arrow>
-              <Outline
-                type="button"
-                onClick={() => setDate(today)}
-                disabled={date === today}
-              >
-                Today
-              </Outline>
-            </DateNav>
-          )}
-
-          {mode === "range" && (
-            <RangeFields>
-              <DateInput
-                type="date"
-                aria-label="Start date"
-                value={startDate}
-                max={endDate || undefined}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-              <span>to</span>
-              <DateInput
-                type="date"
-                aria-label="End date"
-                value={endDate}
-                min={startDate || undefined}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </RangeFields>
-          )}
-        </Bar>
-
-        {/* Row 2 (range only): quick ranges */}
-        {mode === "range" && (
-          <Bar>
-            <Chip
-              type="button"
-              onClick={() => preset(startOfWeek(today), addDays(startOfWeek(today), 6))}
-            >
-              This week
-            </Chip>
-            <Chip type="button" onClick={() => preset(today, addDays(today, 6))}>
-              Next 7 days
-            </Chip>
-            <Chip type="button" onClick={() => preset(today, addDays(today, 29))}>
-              Next 30 days
-            </Chip>
-            {rangeInvalid && (
-              <ErrorText role="alert">
-                Start date must be on or before the end date.
-              </ErrorText>
-            )}
-          </Bar>
-        )}
-
-        {error && (
-          <Notice role="alert">
-            <span>{error}</span>
-            <button type="button" onClick={load}>Try again</button>
-            <button type="button" style={{ marginLeft: 0 }} onClick={clearError}>
-              Dismiss
-            </button>
-          </Notice>
-        )}
-
-        {/* Row 3: summary + status filter */}
-        <Bar>
-          <Summary aria-live="polite">
-            <strong>{heading}</strong>
-            {!loading && ` · ${plural(visible.length, "appointment")}`}
-          </Summary>
-
-          <Spacer />
-
-          {statuses.length > 1 && !loading && (
-            <>
-              <Chip
-                type="button"
-                $active={statusFilter === "all"}
-                aria-pressed={statusFilter === "all"}
-                onClick={() => setStatusFilter("all")}
-              >
-                All
-              </Chip>
-              {statuses.map((s) => (
-                <Chip
-                  key={s}
-                  type="button"
-                  $active={statusFilter === s}
-                  aria-pressed={statusFilter === s}
-                  onClick={() => setStatusFilter(s)}
-                >
-                  {s}
-                </Chip>
-              ))}
-            </>
-          )}
-
-          <Button onClick={load} disabled={loading || rangeInvalid}>
-            {loading ? "Loading..." : "Refresh"}
-          </Button>
-        </Bar>
-        </Top>
-
-        {/* List */}
-        <ListScroll>
-        {loading ? (
-          <Loader />
-        ) : groups.length === 0 ? (
-          <EmptyState message={emptyMessage} />
-        ) : (
-          groups.map(([groupDate, items]) => (
-            <div key={groupDate}>
-              {mode !== "day" && (
-                <DayHeading>
-                  {formatShort(groupDate)}
-                  {groupDate === today ? " · Today" : ""}
-                </DayHeading>
+              {mode === "day" && (
+                <DateNav>
+                  <Arrow
+                    type="button"
+                    aria-label="Previous day"
+                    onClick={() => setDate(addDays(date, -1))}
+                  >
+                    ‹
+                  </Arrow>
+                  <DateInput
+                    type="date"
+                    value={date}
+                    aria-label="Pick a date"
+                    onChange={(e) => e.target.value && setDate(e.target.value)}
+                  />
+                  <Arrow
+                    type="button"
+                    aria-label="Next day"
+                    onClick={() => setDate(addDays(date, 1))}
+                  >
+                    ›
+                  </Arrow>
+                  <Outline
+                    type="button"
+                    onClick={() => setDate(today)}
+                    disabled={date === today}
+                  >
+                    Today
+                  </Outline>
+                </DateNav>
               )}
 
-              {items.map((a) => {
-                const st = statusStyle(a.status);
-                return (
-                  <Item key={a.id} onClick={() => openDetails(a.id)}>
-                    <Time>{formatTime(a.appointment_time)}</Time>
+              {mode === "range" && (
+                <RangeFields>
+                  <DateInput
+                    type="date"
+                    aria-label="Start date"
+                    value={startDate}
+                    max={endDate || undefined}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                  <span>to</span>
+                  <DateInput
+                    type="date"
+                    aria-label="End date"
+                    value={endDate}
+                    min={startDate || undefined}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </RangeFields>
+              )}
+            </Bar>
 
-                    <Patient>{a.patient_name}</Patient>
+            {/* Row 2 (range only): quick ranges */}
+            {mode === "range" && (
+              <Bar>
+                <Chip
+                  type="button"
+                  onClick={() =>
+                    preset(startOfWeek(today), addDays(startOfWeek(today), 6))
+                  }
+                >
+                  This week
+                </Chip>
+                <Chip
+                  type="button"
+                  onClick={() => preset(today, addDays(today, 6))}
+                >
+                  Next 7 days
+                </Chip>
+                <Chip
+                  type="button"
+                  onClick={() => preset(today, addDays(today, 29))}
+                >
+                  Next 30 days
+                </Chip>
+                {rangeInvalid && (
+                  <ErrorText role="alert">
+                    Start date must be on or before the end date.
+                  </ErrorText>
+                )}
+              </Bar>
+            )}
 
-                    <Provider>{a.provider_name}</Provider>
+            {error && (
+              <Notice role="alert">
+                <span>{error}</span>
+                <button type="button" onClick={load}>
+                  Try again
+                </button>
+                <button
+                  type="button"
+                  style={{ marginLeft: 0 }}
+                  onClick={clearError}
+                >
+                  Dismiss
+                </button>
+              </Notice>
+            )}
 
-                    <Badge $fg={st.fg} $bg={st.bg}>
-                      {a.status || "Unknown"}
-                    </Badge>
+            {/* Row 3: summary + status filter */}
+            <Bar>
+              <Summary aria-live="polite">
+                <strong>{heading}</strong>
+                {!loading && ` · ${plural(visible.length, "appointment")}`}
+              </Summary>
 
-                    <ViewBtn
+              <Spacer />
+
+              {statuses.length > 1 && !loading && (
+                <>
+                  <Chip
+                    type="button"
+                    $active={statusFilter === "all"}
+                    aria-pressed={statusFilter === "all"}
+                    onClick={() => setStatusFilter("all")}
+                  >
+                    All
+                  </Chip>
+                  {statuses.map((s) => (
+                    <Chip
+                      key={s}
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openDetails(a.id);
-                      }}
+                      $active={statusFilter === s}
+                      aria-pressed={statusFilter === s}
+                      onClick={() => setStatusFilter(s)}
                     >
-                      View
-                    </ViewBtn>
-                  </Item>
-                );
-              })}
-            </div>
-          ))
-        )}
-        </ListScroll>
-      </Panel>
+                      {s}
+                    </Chip>
+                  ))}
+                </>
+              )}
+
+              <Button onClick={load} disabled={loading || rangeInvalid}>
+                {loading ? "Loading..." : "Refresh"}
+              </Button>
+            </Bar>
+          </Top>
+
+          {/* List */}
+          <ListScroll>
+            {loading ? (
+              <Loader />
+            ) : groups.length === 0 ? (
+              <EmptyState message={emptyMessage} />
+            ) : (
+              groups.map(([groupDate, items]) => (
+                <div key={groupDate}>
+                  {mode !== "day" && (
+                    <DayHeading>
+                      {formatShort(groupDate)}
+                      {groupDate === today ? " · Today" : ""}
+                    </DayHeading>
+                  )}
+
+                  {items.map((a) => {
+                    const st = statusStyle(a.status);
+                    return (
+                      <Item key={a.id} onClick={() => openDetails(a.id)}>
+                        <Time>{formatTime(a.appointment_time)}</Time>
+
+                        <Patient>{a.patient_name}</Patient>
+
+                        <Provider>{a.provider_name}</Provider>
+
+                        <Badge $fg={st.fg} $bg={st.bg}>
+                          {a.status || "Unknown"}
+                        </Badge>
+
+                        <ViewBtn
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDetails(a.id);
+                          }}
+                        >
+                          View
+                        </ViewBtn>
+                      </Item>
+                    );
+                  })}
+                </div>
+              ))
+            )}
+          </ListScroll>
+        </Panel>
       </Page>
 
       <Modal
@@ -790,7 +805,9 @@ function AppointmentCalendarContent() {
 
             <dt>Date</dt>
             <dd>
-              {selectedAppointment.date ? formatLong(selectedAppointment.date) : "-"}
+              {selectedAppointment.date
+                ? formatLong(selectedAppointment.date)
+                : "-"}
             </dd>
 
             <dt>Time</dt>
