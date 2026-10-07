@@ -14,6 +14,8 @@ import chatSaga from "../modules/chat/chatSaga";
 import notesSaga from "../modules/notes/notesSaga";
 import medicineSaga from "../modules/medicines/medicineSaga";
 
+import offlineSaga from "../modules/offline/offlineSaga";
+
 export default function* rootSaga() {
   yield all([
     authSaga(),
@@ -29,6 +31,7 @@ export default function* rootSaga() {
     notificationsSaga(),
     chatSaga(),
     notesSaga(),
-    medicineSaga()
+    medicineSaga(),
+    offlineSaga()
   ]);
 }
