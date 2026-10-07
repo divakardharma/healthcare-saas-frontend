@@ -50,7 +50,7 @@ const resetBatchCache = (state) => {
 const patientSlice = createSlice({
   name: "patients",
 
-  initialState,
+  initialState, 
 
   reducers: {
     // Ask for one batch. `fetchPatientsRequest()` still means "batch 1".

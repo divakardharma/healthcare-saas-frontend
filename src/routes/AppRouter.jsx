@@ -20,16 +20,8 @@ const AppointmentList = lazy(() => import("../pages/Appointments/AppointmentList
 const AppointmentCalendar = lazy(() => import("../pages/Appointments/AppointmentCalendar"));
 const StaffPage = lazy(() => import("../pages/Staff/StaffPage"));
 const BillingPage = lazy(() => import("../pages/Billing/BillingPage"));
-const NotificationsPage = lazy(
-  () => import("../pages/Notifications/NotificationsPage")
-);
-
-const ChatPage = lazy(
-  () =>
-    import(
-      "../pages/Chat/ChatPage"
-    )
-);
+const NotificationsPage = lazy(() => import("../pages/Notifications/NotificationsPage"));
+const ChatPage = lazy(() =>import("../pages/Chat/ChatPage"));
 
 function Protected({ children }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;

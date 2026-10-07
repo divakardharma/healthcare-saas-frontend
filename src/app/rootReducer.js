@@ -1,10 +1,7 @@
-import {
-  combineReducers,
-} from "@reduxjs/toolkit";
+import { combineReducers } from "@reduxjs/toolkit";
 
 import authReducer from "../modules/auth/authSlice";
 import tenantReducer from "../modules/tenant/tenantSlice";
-
 import userReducer from "../modules/users/userSlice";
 import patientReducer from "../modules/patients/patientSlice";
 import appointmentReducer from "../modules/appointments/appointmentSlice";
@@ -16,6 +13,8 @@ import prescriptionReducer from "../modules/prescription/prescriptionSlice";
 import staffReducer from "../modules/staff/staffSlice";
 import billingReducer from "../modules/billing/billingSlice";
 import notificationsReducer from "../modules/notifications/notificationsSlice";
+
+import offlineReducer from "../modules/offline/offlineSlice"; // ← restored
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -30,6 +29,7 @@ const rootReducer = combineReducers({
   billing: billingReducer,
   notifications: notificationsReducer,
   chat: chatReducer,
+  offline: offlineReducer, // ← restored
 });
 
 export default rootReducer;

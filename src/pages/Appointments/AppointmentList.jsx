@@ -15,6 +15,24 @@ import {
   Table,
 } from "../../components/common";
 
+import {
+  CARD_LAYOUT_MAX_WIDTH,
+  PHONE,
+  SMALL,
+  CardList,
+  CardName,
+  CardTop,
+  CardsOnly,
+  Details,
+  IdBadge,
+  IdText,
+  NameText,
+  PageIndicator,
+  PageShell,
+  Pagination,
+  PaginationInfo,
+} from "../../components/common/listStyles";
+
 import RoleBasedRoute from "../../routes/RoleBasedRoute";
 
 import useAppointments from "../../modules/appointments/hooks/useAppointments";
@@ -76,19 +94,12 @@ const Select = styled.select`
   width: 100%;
   padding: 10px 12px;
 
-  border: 1px solid
-    ${({ theme }) => theme.colors.inputBorder};
+  border: 1px solid ${({ theme }) => theme.colors.inputBorder};
+  border-radius: ${({ theme }) => theme.borderRadius.small};
 
-  border-radius: ${({ theme }) =>
-    theme.borderRadius.small};
-
-  background: ${({ theme }) =>
-    theme.colors.surface};
-
-  color: ${({ theme }) =>
-    theme.colors.textPrimary};
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.textPrimary};
 `;
-
 
 const Label = styled.label`
   display: grid;
@@ -160,33 +171,17 @@ const PAGE_SIZE = 10;
 const API_BATCH_SIZE = 20;
 const PAGES_PER_BATCH = API_BATCH_SIZE / PAGE_SIZE;
 
-const PHONE = "480px";
-const TABLET = "700px";
-const SMALL = "360px";
-
 // UI page 1,2 -> batch 1 | page 3,4 -> batch 2 | page 5,6 -> batch 3 ...
 const batchForPage = (page) => Math.floor((page - 1) / PAGES_PER_BATCH) + 1;
 
 // 0 for the first UI page of a batch, 1 for the second.
 const pageWithinBatchFor = (page) => (page - 1) % PAGES_PER_BATCH;
 
-const TINY = "280px";
-const CARD_LAYOUT_MAX_WIDTH = "1199px";
-
 // Fixed row heights so 10 appointments fit on one screen without page
 // scrolling, and the pagination bar stays in the same place on every page
 // (even the last page with fewer rows). On short screens (laptops with
 // browser toolbars / display scaling) the rows shrink a little more.
 const HEADER_ROW_HEIGHT = 36;
-
-/* ---------- Page shell (same as Patients) ---------- */
-
-const PageShell = styled.div`
-  width: 100%;
-  max-width: 1600px;
-  min-width: 0;
-  margin: 0 auto;
-`;
 
 /* ---------- Layout switching: table (desktop) / cards (tablet, phone) ---------- */
 
@@ -259,25 +254,7 @@ const DesktopOnly = styled.div`
   }
 `;
 
-const CardsOnly = styled.div`
-  display: none;
-
-  @media (max-width: ${CARD_LAYOUT_MAX_WIDTH}) {
-    display: block;
-  }
-`;
-
 /* ---------- Table cells ---------- */
-
-const IdText = styled.span`
-  color: ${({ theme }) => theme.colors.textSecondary};
-  font-variant-numeric: tabular-nums;
-`;
-
-const NameText = styled.span`
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.textPrimary};
-`;
 
 const statusColor = (theme, status) => {
   if (status === "Completed") {
@@ -304,8 +281,7 @@ const StatusBadge = styled.span`
   white-space: nowrap;
 
   color: ${({ theme, $status }) => statusColor(theme, $status)};
-  background: ${({ theme, $status }) =>
-    statusColor(theme, $status)}1a;
+  background: ${({ theme, $status }) => statusColor(theme, $status)}1a;
 
   border-radius: 999px;
 `;
@@ -378,16 +354,6 @@ const RowActions = styled.div`
 
 /* ---------- Appointment cards (tablet / mobile) ---------- */
 
-const CardList = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-  gap: 12px;
-
-  @media (max-width: ${PHONE}) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-`;
-
 const AppointmentCard = styled.article`
   display: flex;
   flex-direction: column;
@@ -406,93 +372,12 @@ const AppointmentCard = styled.article`
   }
 `;
 
-const CardTop = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-
-  @media (max-width: ${TINY}) {
-    flex-wrap: wrap;
-  }
-`;
-
-const CardName = styled.h3`
-  margin: 0;
-  min-width: 0;
-  font-size: 16px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-  color: ${({ theme }) => theme.colors.textPrimary};
-`;
-
-const IdBadge = styled.span`
-  flex-shrink: 0;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 600;
-
-  color: ${({ theme }) => theme.colors.textSecondary};
-  background: ${({ theme }) => theme.colors.disabled};
-
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-`;
-
-const Details = styled.dl`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
-  gap: 8px 12px;
-  margin: 0;
-
-  dt {
-    font-size: 12px;
-    color: ${({ theme }) => theme.colors.textSecondary};
-  }
-
-  dd {
-    margin: 2px 0 0;
-    font-size: 14px;
-    overflow-wrap: anywhere;
-    color: ${({ theme }) => theme.colors.textPrimary};
-  }
-
-  @media (max-width: ${TINY}) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-`;
-
 const show = (value) =>
   value === null || value === undefined || value === "" ? "—" : value;
 
 // 12:00:00 -> 12:00
 const formatTime = (value) =>
   value ? String(value).slice(0, 5) : "—";
-
-const Pagination = styled.nav`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding-top: 12px;
-
-  border-top: 1px solid ${({ theme }) => theme.colors.border};
-
-  @media (max-width: ${TABLET}) {
-    justify-content: center;
-  }
-`;
-
-const PaginationInfo = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.colors.textSecondary};
-
-  @media (max-width: ${TABLET}) {
-    width: 100%;
-    text-align: center;
-  }
-`;
 
 const PaginationControls = styled.div`
   display: flex;
@@ -532,20 +417,6 @@ const PaginationControls = styled.div`
   }
 `;
 
-const PageIndicator = styled.span`
-  min-width: 84px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 500;
-  color: ${({ theme }) => theme.colors.textPrimary};
-
-  @media (max-width: ${PHONE}) {
-    flex: 0 0 auto;
-    min-width: 0;
-    font-size: 13px;
-  }
-`;
-
 function AppointmentListContent() {
   const { user } = useAuth();
   const { users, fetchUsers } = useUsers();
@@ -566,19 +437,11 @@ function AppointmentListContent() {
     cancelAppointment,
   } = useAppointments();
 
-  const {
-    patients,
-    fetchPatients,
-  } = usePatients();
+  const { patients, fetchPatients } = usePatients();
 
-  const [modalOpen, setModalOpen] =
-    useState(false);
-
-  const [editing, setEditing] =
-    useState(null);
-
-  const [cancelId, setCancelId] =
-    useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [cancelId, setCancelId] = useState(null);
 
   const [form, setForm] = useState({
     patient_id: "",
@@ -596,8 +459,7 @@ function AppointmentListContent() {
 
   // The appointment cache is cleared after create/update/status/cancel:
   // go back to page 1.
-  const [seenCacheVersion, setSeenCacheVersion] =
-    useState(cacheVersion);
+  const [seenCacheVersion, setSeenCacheVersion] = useState(cacheVersion);
 
   if (seenCacheVersion !== cacheVersion) {
     setSeenCacheVersion(cacheVersion);
@@ -607,29 +469,23 @@ function AppointmentListContent() {
   const filteredPatients = patients.filter((patient) => {
     const query = patientSearch.trim().toLowerCase();
 
-  return (
-    (patient.patient_name || "").toLowerCase().includes(query) ||
-    String(patient.id).includes(query)
-  );
-});
+    return (
+      (patient.patient_name || "").toLowerCase().includes(query) ||
+      String(patient.id).includes(query)
+    );
+  });
 
   useEffect(() => {
     fetchPatients();
     fetchUsers("Provider");
-  }, [
-    fetchPatients,
-    fetchUsers
-  ]);
+  }, [fetchPatients, fetchUsers]);
 
   /*
     Pagination: the API sends 20 appointments per request, the table shows 10.
       UI page 1,2 -> batch 1 | 3,4 -> batch 2 | 5,6 -> batch 3 ...
     The total comes from the backend, never from the loaded batches.
   */
-  const totalPages = Math.max(
-    1,
-    Math.ceil(total / PAGE_SIZE)
-  );
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   // Clamp so the page can never point past the last page.
   const currentPage = Math.min(page, totalPages);
@@ -645,12 +501,10 @@ function AppointmentListContent() {
 
   const nextBatchNumber = batchNumber + 1;
 
-  const currentBatchError =
-    batchErrors?.[batchNumber] || null;
+  const currentBatchError = batchErrors?.[batchNumber] || null;
 
   // The batch for this page is not here yet and has not failed.
-  const currentBatchLoading =
-    !currentBatch && !currentBatchError;
+  const currentBatchLoading = !currentBatch && !currentBatchError;
 
   const visibleAppointments = (currentBatch || []).slice(
     pageWithinBatch * PAGE_SIZE,
@@ -659,8 +513,7 @@ function AppointmentListContent() {
 
   // Show the bar when there is more than one page, or when the current batch
   // failed (so Retry stays reachable even if nothing could be counted).
-  const showPagination =
-    total > PAGE_SIZE || Boolean(currentBatchError);
+  const showPagination = total > PAGE_SIZE || Boolean(currentBatchError);
 
   // Second UI page of the batch: load the following batch in the background,
   // once, and only if the server says there is more.
@@ -695,11 +548,7 @@ function AppointmentListContent() {
     if (shouldPrefetchNextBatch) {
       fetchAppointments(nextBatchNumber, { prefetch: true });
     }
-  }, [
-    shouldPrefetchNextBatch,
-    nextBatchNumber,
-    fetchAppointments,
-  ]);
+  }, [shouldPrefetchNextBatch, nextBatchNumber, fetchAppointments]);
 
   // Retry re-requests only the batch the current page belongs to.
   const retryCurrentBatch = () => fetchAppointments(batchNumber);
@@ -708,70 +557,53 @@ function AppointmentListContent() {
 
   const rangeEnd = Math.min(startIndex + PAGE_SIZE, total);
 
-const openCreate = () => {
-  setEditing(null);
+  const openCreate = () => {
+    setEditing(null);
 
-  setForm({
-    patient_id: "",
-    provider_id:
-      user?.roles?.includes("Provider")
-        ? user.id
-        : "",
-    appointment_date: "",
-    appointment_time: "",
-    reason: "",
-    status: "Scheduled",
-  });
+    setForm({
+      patient_id: "",
+      provider_id: user?.roles?.includes("Provider") ? user.id : "",
+      appointment_date: "",
+      appointment_time: "",
+      reason: "",
+      status: "Scheduled",
+    });
 
-  setPatientSearch("");
-  setShowPatientResults(false);
+    setPatientSearch("");
+    setShowPatientResults(false);
 
-  setModalOpen(true);
-};
+    setModalOpen(true);
+  };
 
-const openEdit = (row) => {
-  setEditing(row);
+  const openEdit = (row) => {
+    setEditing(row);
 
-  setForm({
-    patient_id:
-      row.patient_id || "",
+    setForm({
+      patient_id: row.patient_id || "",
+      provider_id: row.provider_id || "",
+      appointment_date: row.appointment_date || "",
+      appointment_time: (row.appointment_time || "").slice(0, 5),
+      reason: row.reason || "",
+      status: row.status || "Scheduled",
+    });
 
-    provider_id:
-      row.provider_id || "",
+    const selectedPatient = patients.find(
+      (patient) => Number(patient.id) === Number(row.patient_id)
+    );
 
-    appointment_date:
-      row.appointment_date || "",
+    setPatientSearch(selectedPatient?.patient_name || row.patient_name || "");
+    setShowPatientResults(false);
 
-    appointment_time:
-      (row.appointment_time || "").slice(
-        0,
-        5
-      ),
+    setModalOpen(true);
+  };
 
-    reason:
-      row.reason || "",
-
-    status:
-      row.status || "Scheduled",
-  });
-
-  const selectedPatient = patients.find(
-    (patient) =>
-      Number(patient.id) === Number(row.patient_id)
-  );
-
-  setPatientSearch(selectedPatient?.patient_name || row.patient_name || "");
-  setShowPatientResults(false);
-
-  setModalOpen(true);
-};
   const submit = (event) => {
     event.preventDefault();
 
-if (!form.patient_id || !form.provider_id) {
-  alert("Please select a patient and provider.");
-  return;
-}
+    if (!form.patient_id || !form.provider_id) {
+      alert("Please select a patient and provider.");
+      return;
+    }
 
     const payload = {
       ...form,
@@ -780,10 +612,7 @@ if (!form.patient_id || !form.provider_id) {
     };
 
     if (editing) {
-      updateAppointment(
-        editing.id,
-        payload
-      );
+      updateAppointment(editing.id, payload);
     } else {
       createAppointment(payload);
     }
@@ -795,33 +624,24 @@ if (!form.patient_id || !form.provider_id) {
   // complete (PATCH .../status). There is no delete or detail page.
   const renderActions = (row, stretch = false) => (
     <RowActions $stretch={stretch}>
-      <Button
-        onClick={() => openEdit(row)}
-        disabled={actionLoading}
-      >
+      <Button onClick={() => openEdit(row)} disabled={actionLoading}>
         Edit
       </Button>
 
       {row.status !== "Cancelled" && (
-        <Button
-          onClick={() => setCancelId(row.id)}
-          disabled={actionLoading}
-        >
+        <Button onClick={() => setCancelId(row.id)} disabled={actionLoading}>
           Cancel
         </Button>
       )}
 
-      {row.status !== "Completed" &&
-        row.status !== "Cancelled" && (
-          <Button
-            onClick={() =>
-              updateStatus(row.id, "Completed")
-            }
-            disabled={actionLoading}
-          >
-            Complete
-          </Button>
-        )}
+      {row.status !== "Completed" && row.status !== "Cancelled" && (
+        <Button
+          onClick={() => updateStatus(row.id, "Completed")}
+          disabled={actionLoading}
+        >
+          Complete
+        </Button>
+      )}
     </RowActions>
   );
 
@@ -829,51 +649,39 @@ if (!form.patient_id || !form.provider_id) {
     {
       key: "id",
       label: "ID",
-      render: (row) => <IdText>#{row.id}</IdText>,
+      render: (row) => <IdText>{row.id}</IdText>,
     },
-
     {
       key: "patient_name",
       label: "Patient",
       render: (row) => (
-        <NameText title={row.patient_name}>
-          {show(row.patient_name)}
-        </NameText>
+        <NameText title={row.patient_name}>{show(row.patient_name)}</NameText>
       ),
     },
-
     {
       key: "provider_name",
       label: "Provider",
       render: (row) => (
-        <span title={row.provider_name}>
-          {show(row.provider_name)}
-        </span>
+        <span title={row.provider_name}>{show(row.provider_name)}</span>
       ),
     },
-
     {
       key: "appointment_date",
       label: "Date",
       render: (row) => show(row.appointment_date),
     },
-
     {
       key: "appointment_time",
       label: "Time",
       render: (row) => formatTime(row.appointment_time),
     },
-
     {
       key: "status",
       label: "Status",
       render: (row) => (
-        <StatusBadge $status={row.status}>
-          {show(row.status)}
-        </StatusBadge>
+        <StatusBadge $status={row.status}>{show(row.status)}</StatusBadge>
       ),
     },
-
     {
       key: "actions",
       label: "Actions",
@@ -884,343 +692,294 @@ if (!form.patient_id || !form.provider_id) {
   return (
     <DashboardLayout>
       <PageShell>
-    <AppointmentHeader>
-  <PageHeader
-    title="Appointments"
-    description="Create, update, cancel and track appointment status."
-    action={
-      <Button onClick={openCreate}>
-        Add Appointment
-      </Button>
-    }
-  />
-</AppointmentHeader>
+        <AppointmentHeader>
+          <PageHeader
+            title="Appointments"
+            description="Create, update, cancel and track appointment status."
+            action={<Button onClick={openCreate}>Add Appointment</Button>}
+          />
+        </AppointmentHeader>
 
-      {(error || currentBatchError) && (
-        <ErrorText>
-          {error || currentBatchError}
-        </ErrorText>
-      )}
-
-      <Card>
-        {currentBatchLoading ? (
-          <Loader />
-        ) : visibleAppointments.length === 0 &&
-          !currentBatchError ? (
-          <EmptyState message="No appointments found." />
-        ) : (
-          <>
-            {visibleAppointments.length > 0 && (
-              <>
-                <DesktopOnly $reserveSpace={showPagination}>
-                  <Table
-                    columns={columns}
-                    data={visibleAppointments}
-                  />
-                </DesktopOnly>
-
-                <CardsOnly>
-                  <CardList>
-                    {visibleAppointments.map((row) => (
-                      <AppointmentCard key={row.id}>
-                        <CardTop>
-                          <CardName>
-                            {show(row.patient_name)}
-                          </CardName>
-
-                          <IdBadge>ID {row.id}</IdBadge>
-                        </CardTop>
-
-                        <Details>
-                          <div>
-                            <dt>Provider</dt>
-                            <dd>{show(row.provider_name)}</dd>
-                          </div>
-
-                          <div>
-                            <dt>Date</dt>
-                            <dd>{show(row.appointment_date)}</dd>
-                          </div>
-
-                          <div>
-                            <dt>Time</dt>
-                            <dd>{formatTime(row.appointment_time)}</dd>
-                          </div>
-
-                          <div>
-                            <dt>Status</dt>
-                            <dd>
-                              <StatusBadge $status={row.status}>
-                                {show(row.status)}
-                              </StatusBadge>
-                            </dd>
-                          </div>
-                        </Details>
-
-                        {renderActions(row, true)}
-                      </AppointmentCard>
-                    ))}
-                  </CardList>
-                </CardsOnly>
-              </>
-            )}
-
-            {showPagination && (
-              <Pagination aria-label="Appointment list pagination">
-                <PaginationInfo>
-                  Showing {rangeStart}–{rangeEnd} of {total}
-                </PaginationInfo>
-
-                <PaginationControls>
-                  <Button
-                    onClick={() => setPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-
-                  <PageIndicator>
-                    Page {currentPage} of {totalPages}
-                  </PageIndicator>
-
-                  <Button
-                    onClick={
-                      currentBatchError
-                        ? retryCurrentBatch
-                        : () => setPage(currentPage + 1)
-                    }
-                    disabled={!currentBatchError && currentPage === totalPages}
-                  >
-                    {currentBatchError ? "Retry" : "Next"}
-                  </Button>
-                </PaginationControls>
-              </Pagination>
-            )}
-          </>
+        {(error || currentBatchError) && (
+          <ErrorText>{error || currentBatchError}</ErrorText>
         )}
-      </Card>
 
-      <Modal
-        isOpen={modalOpen}
-        title={
-          editing
-            ? "Edit Appointment"
-            : "Create Appointment"
-        }
-        onClose={() =>
-          setModalOpen(false)
-        }
-      >
-        <Form onSubmit={submit}>
-          <Grid>
-
-            {/* PATIENT */}
-     
-{/* PATIENT AUTOCOMPLETE */}
-<Label>
-  Patient
-
-  <PatientSearchWrapper>
-    <PatientSearchInput
-      type="text"
-      placeholder="Search patient by name or ID..."
-      value={patientSearch}
-      onChange={(e) => {
-        setPatientSearch(e.target.value);
-        setShowPatientResults(true);
-
-        setForm((prev) => ({
-          ...prev,
-          patient_id: "",
-        }));
-      }}
-      onFocus={() => setShowPatientResults(true)}
-      required={!form.patient_id}
-      disabled={actionLoading}
-      autoComplete="off"
-    />
-
-    {showPatientResults &&
-      patientSearch.trim() !== "" && (
-        <PatientResults>
-          {filteredPatients.length > 0 ? (
-            filteredPatients.map((patient) => (
-              <PatientResult
-                key={patient.id}
-                type="button"
-                onClick={() => {
-                  setForm((prev) => ({
-                    ...prev,
-                    patient_id: String(patient.id),
-                  }));
-
-                  setPatientSearch(patient.patient_name);
-                  setShowPatientResults(false);
-                }}
-              >
-                {patient.patient_name} (#{patient.id})
-              </PatientResult>
-            ))
+        <Card>
+          {currentBatchLoading ? (
+            <Loader />
+          ) : visibleAppointments.length === 0 && !currentBatchError ? (
+            <EmptyState message="No appointments found." />
           ) : (
-            <PatientNoResults>
-              No matching patients found
-            </PatientNoResults>
+            <>
+              {visibleAppointments.length > 0 && (
+                <>
+                  <DesktopOnly $reserveSpace={showPagination}>
+                    <Table columns={columns} data={visibleAppointments} />
+                  </DesktopOnly>
+
+                  <CardsOnly>
+                    <CardList>
+                      {visibleAppointments.map((row) => (
+                        <AppointmentCard key={row.id}>
+                          <CardTop>
+                            <CardName>{show(row.patient_name)}</CardName>
+
+                            <IdBadge>ID {row.id}</IdBadge>
+                          </CardTop>
+
+                          <Details>
+                            <div>
+                              <dt>Provider</dt>
+                              <dd>{show(row.provider_name)}</dd>
+                            </div>
+
+                            <div>
+                              <dt>Date</dt>
+                              <dd>{show(row.appointment_date)}</dd>
+                            </div>
+
+                            <div>
+                              <dt>Time</dt>
+                              <dd>{formatTime(row.appointment_time)}</dd>
+                            </div>
+
+                            <div>
+                              <dt>Status</dt>
+                              <dd>
+                                <StatusBadge $status={row.status}>
+                                  {show(row.status)}
+                                </StatusBadge>
+                              </dd>
+                            </div>
+                          </Details>
+
+                          {renderActions(row, true)}
+                        </AppointmentCard>
+                      ))}
+                    </CardList>
+                  </CardsOnly>
+                </>
+              )}
+
+              {showPagination && (
+                <Pagination aria-label="Appointment list pagination">
+                  <PaginationInfo>
+                    Showing {rangeStart}–{rangeEnd} of {total}
+                  </PaginationInfo>
+
+                  <PaginationControls>
+                    <Button
+                      onClick={() => setPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+
+                    <PageIndicator>
+                      Page {currentPage} of {totalPages}
+                    </PageIndicator>
+
+                    <Button
+                      onClick={
+                        currentBatchError
+                          ? retryCurrentBatch
+                          : () => setPage(currentPage + 1)
+                      }
+                      disabled={
+                        !currentBatchError && currentPage === totalPages
+                      }
+                    >
+                      {currentBatchError ? "Retry" : "Next"}
+                    </Button>
+                  </PaginationControls>
+                </Pagination>
+              )}
+            </>
           )}
-        </PatientResults>
-      )}
-  </PatientSearchWrapper>
-</Label>
+        </Card>
 
-            {/* PROVIDER */}
-       <Label>
-  Provider
+        <Modal
+          isOpen={modalOpen}
+          title={editing ? "Edit Appointment" : "Create Appointment"}
+          onClose={() => setModalOpen(false)}
+        >
+          <Form onSubmit={submit}>
+            <Grid>
+              {/* PATIENT */}
 
-  <Select
-    value={form.provider_id}
-    onChange={(e) =>
-      setForm({
-        ...form,
-        provider_id: e.target.value,
-      })
-    }
-    required
-    disabled={
-      actionLoading ||
-      user?.roles?.includes("Provider")
-    }
-  >
-    <option value="">Select provider</option>
-
-    {users.map((provider) => (
-      <option key={provider.id} value={provider.id}>
-        {provider.name} (#{provider.id})
-      </option>
-    ))}
-  </Select>
-</Label>
-
-            {/* DATE */}
-            <Input
-              label="Date"
-              name="appointment_date"
-              type="date"
-              value={
-                form.appointment_date
-              }
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  appointment_date:
-                    e.target.value,
-                })
-              }
-              required
-              disabled={actionLoading}
-            />
-
-            {/* TIME */}
-            <Input
-              label="Time"
-              name="appointment_time"
-              type="time"
-              value={
-                form.appointment_time
-              }
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  appointment_time:
-                    e.target.value,
-                })
-              }
-              required
-              disabled={actionLoading}
-            />
-
-            {/* REASON */}
-            <Input
-              label="Reason"
-              name="reason"
-              value={form.reason}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  reason:
-                    e.target.value,
-                })
-              }
-              disabled={actionLoading}
-            />
-
-            {/* STATUS - EDIT ONLY */}
-            {editing && (
+              {/* PATIENT AUTOCOMPLETE */}
               <Label>
-                Status
+                Patient
+
+                <PatientSearchWrapper>
+                  <PatientSearchInput
+                    type="text"
+                    placeholder="Search patient by name or ID..."
+                    value={patientSearch}
+                    onChange={(e) => {
+                      setPatientSearch(e.target.value);
+                      setShowPatientResults(true);
+
+                      setForm((prev) => ({
+                        ...prev,
+                        patient_id: "",
+                      }));
+                    }}
+                    onFocus={() => setShowPatientResults(true)}
+                    required={!form.patient_id}
+                    disabled={actionLoading}
+                    autoComplete="off"
+                  />
+
+                  {showPatientResults && patientSearch.trim() !== "" && (
+                    <PatientResults>
+                      {filteredPatients.length > 0 ? (
+                        filteredPatients.map((patient) => (
+                          <PatientResult
+                            key={patient.id}
+                            type="button"
+                            onClick={() => {
+                              setForm((prev) => ({
+                                ...prev,
+                                patient_id: String(patient.id),
+                              }));
+
+                              setPatientSearch(patient.patient_name);
+                              setShowPatientResults(false);
+                            }}
+                          >
+                            {patient.patient_name} ({patient.id})
+                          </PatientResult>
+                        ))
+                      ) : (
+                        <PatientNoResults>
+                          No matching patients found
+                        </PatientNoResults>
+                      )}
+                    </PatientResults>
+                  )}
+                </PatientSearchWrapper>
+              </Label>
+
+              {/* PROVIDER */}
+              <Label>
+                Provider
 
                 <Select
-                  value={form.status}
+                  value={form.provider_id}
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      status:
-                        e.target.value,
+                      provider_id: e.target.value,
                     })
                   }
-                  disabled={actionLoading}
+                  required
+                  disabled={actionLoading || user?.roles?.includes("Provider")}
                 >
-                  <option>
-                    Scheduled
-                  </option>
+                  <option value="">Select provider</option>
 
-                  <option>
-                    Completed
-                  </option>
-
-                  <option>
-                    Cancelled
-                  </option>
+                  {users.map((provider) => (
+                    <option key={provider.id} value={provider.id}>
+                      {provider.name} ({provider.id})
+                    </option>
+                  ))}
                 </Select>
               </Label>
-            )}
-          </Grid>
 
-          <Actions>
-            <Button
-              type="button"
-              onClick={() =>
-                setModalOpen(false)
-              }
-            >
-              Cancel
-            </Button>
+              {/* DATE */}
+              <Input
+                label="Date"
+                name="appointment_date"
+                type="date"
+                value={form.appointment_date}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    appointment_date: e.target.value,
+                  })
+                }
+                required
+                disabled={actionLoading}
+              />
 
-            <Button
-              type="submit"
-              disabled={actionLoading}
-            >
-              {actionLoading
-                ? "Saving..."
-                : "Save"}
-            </Button>
-          </Actions>
-        </Form>
-      </Modal>
+              {/* TIME */}
+              <Input
+                label="Time"
+                name="appointment_time"
+                type="time"
+                value={form.appointment_time}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    appointment_time: e.target.value,
+                  })
+                }
+                required
+                disabled={actionLoading}
+              />
 
-      <ConfirmModal
-        isOpen={Boolean(cancelId)}
-        title="Cancel Appointment"
-        message="Cancel this appointment?"
-        onCancel={() =>
-          setCancelId(null)
-        }
-        onConfirm={() => {
-          cancelAppointment(
-            cancelId
-          );
+              {/* REASON */}
+              <Input
+                label="Reason"
+                name="reason"
+                value={form.reason}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    reason: e.target.value,
+                  })
+                }
+                disabled={actionLoading}
+              />
 
-          setCancelId(null);
-        }}
-      />
+              {/* STATUS - EDIT ONLY */}
+              {editing && (
+                <Label>
+                  Status
+
+                  <Select
+                    value={form.status}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        status: e.target.value,
+                      })
+                    }
+                    disabled={actionLoading}
+                  >
+                    <option>Scheduled</option>
+
+                    <option>Completed</option>
+
+                    <option>Cancelled</option>
+                  </Select>
+                </Label>
+              )}
+            </Grid>
+
+            <Actions>
+              <Button type="button" onClick={() => setModalOpen(false)}>
+                Cancel
+              </Button>
+
+              <Button type="submit" disabled={actionLoading}>
+                {actionLoading ? "Saving..." : "Save"}
+              </Button>
+            </Actions>
+          </Form>
+        </Modal>
+
+        <ConfirmModal
+          isOpen={Boolean(cancelId)}
+          title="Cancel Appointment"
+          message="Cancel this appointment?"
+          onCancel={() => setCancelId(null)}
+          onConfirm={() => {
+            cancelAppointment(cancelId);
+
+            setCancelId(null);
+          }}
+        />
       </PageShell>
     </DashboardLayout>
   );
@@ -1228,12 +987,7 @@ if (!form.patient_id || !form.provider_id) {
 
 export default function AppointmentList() {
   return (
-    <RoleBasedRoute
-      allowedRoles={[
-        "Provider",
-        "Nurse",
-      ]}
-    >
+    <RoleBasedRoute allowedRoles={["Provider", "Nurse"]}>
       <AppointmentListContent />
     </RoleBasedRoute>
   );

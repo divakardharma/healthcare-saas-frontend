@@ -16,69 +16,45 @@ import {
   Table,
 } from "../../components/common";
 
+import {
+  CARD_LAYOUT_MAX_WIDTH,
+  PHONE,
+  SMALL,
+  TABLET,
+  CardList,
+  CardName,
+  CardTop,
+  CardsOnly,
+  Details,
+  IdBadge,
+  IdText,
+  NameText,
+  PageIndicator,
+  PageShell,
+  Pagination,
+  PaginationInfo,
+} from "../../components/common/listStyles";
+
 import RoleBasedRoute from "../../routes/RoleBasedRoute";
 import usePatients from "../../modules/patients/hooks/usePatients";
 
 const PAGE_SIZE = 8;
 
-// The API returns 16 patients per request (fixed by the backend,
-// PatientService::BATCH_SIZE). Each batch therefore covers two 8-row pages.
 const API_BATCH_SIZE = 16;
 const PAGES_PER_BATCH = API_BATCH_SIZE / PAGE_SIZE;
 
-// UI page 1,2 -> batch 1 | page 3,4 -> batch 2 | page 5,6 -> batch 3 ...
 const batchForPage = (page) => Math.floor((page - 1) / PAGES_PER_BATCH) + 1;
 
-// 0 for the first UI page of a batch, 1 for the second.
 const pageWithinBatchFor = (page) => (page - 1) % PAGES_PER_BATCH;
 
-// Fixed table row heights so the pagination bar stays in the same place
-// on every page, even when the last page has fewer rows.
 const HEADER_ROW_HEIGHT = 38;
 const BODY_ROW_HEIGHT = 43;
-
-/*
-  ---------- Breakpoints (based on real device viewport widths) ----------
-
-  PHONE   <= 480px   iPhone SE 320/375, iPhone 12-15 390/393, Pixel 412,
-                     Galaxy S 360, iPhone Pro Max 430
-  TABLET  <= 700px   large phones in landscape, small tablets
-  CARDS   <= 1199px  iPad portrait 768/820/834, iPad landscape 1024/1180,
-                     small laptops with the 240px sidebar. The table needs
-                     ~900px of content width, so cards are used below this.
-  Above 1199px       full table (laptops 1280/1366/1440/1920)
-*/
-const PHONE = "480px";
-const TABLET = "700px";
-const SMALL = "360px"; // Moto G4, Galaxy S, folded foldables
-const TINY = "280px"; // JioPhone 2 (240px) and the narrowest folded phones
-const CARD_LAYOUT_MAX_WIDTH = "1199px";
-
-/* ---------- Page shell (large monitors) ---------- */
-
-/*
-  On 1920px, 2560px and 4K screens an unlimited-width table becomes very
-  hard to read: the eye has to travel too far between a name and its
-  buttons. The content is capped and centered instead.
-*/
-const PageShell = styled.div`
-  width: 100%;
-  max-width: 1600px;
-  min-width: 0;
-  margin: 0 auto;
-`;
-
-/* ---------- Form styles ---------- */
 
 const Form = styled.form`
   display: grid;
   gap: 14px;
   min-width: 0;
 
-  /*
-    iOS Safari zooms the whole page when a focused field has a font size
-    below 16px. Using 16px on small screens prevents that zoom.
-  */
   @media (max-width: ${TABLET}) {
     input,
     textarea,
@@ -131,13 +107,12 @@ const ErrorText = styled.div`
   margin-bottom: 14px;
   overflow-wrap: anywhere;
 `;
+
 const FormError = styled.div`
   color: red;
   font-size: 13px;
   margin-top: 4px;
 `;
-
-/* ---------- Toolbar / search ---------- */
 
 const Toolbar = styled.div`
   display: flex;
@@ -164,7 +139,7 @@ const SearchWrap = styled.div`
     max-width: none;
 
     input {
-      font-size: 16px; /* stops iOS zoom-on-focus */
+      font-size: 16px;
       padding: 10px 12px;
     }
   }
@@ -175,14 +150,7 @@ const ResultCount = styled.span`
   color: ${({ theme }) => theme.colors.textSecondary};
 `;
 
-/* ---------- Layout switching ---------- */
-
 const DesktopOnly = styled.div`
-  /*
-    Compact rows so 8 patients fit on one screen without scrolling.
-    Fixed layout + explicit widths keeps columns aligned on every page
-    and prevents any horizontal scrolling.
-  */
   table {
     table-layout: fixed;
     width: 100%;
@@ -234,31 +202,9 @@ const DesktopOnly = styled.div`
   }
 `;
 
-const CardsOnly = styled.div`
-  display: none;
-
-  @media (max-width: ${CARD_LAYOUT_MAX_WIDTH}) {
-    display: block;
-  }
-`;
-
-/* ---------- Table cells ---------- */
-
-const IdText = styled.span`
-  color: ${({ theme }) => theme.colors.textSecondary};
-  font-variant-numeric: tabular-nums;
-`;
-
 const GenderText = styled.span`
   text-transform: capitalize;
 `;
-
-const NameText = styled.span`
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.textPrimary};
-`;
-
-/* ---------- Row actions (View / Edit / Delete) ---------- */
 
 const viewButtonLook = css`
   background: ${({ theme }) => theme.colors.primary};
@@ -272,8 +218,6 @@ const viewButtonLook = css`
     color: ${({ theme }) => theme.colors.surface};
   }
 
-  /* Hover only on devices that really hover, so touch screens
-     do not keep a "stuck" hover color after a tap. */
   @media (hover: hover) {
     &:hover {
       background: ${({ theme }) => theme.colors.primaryHover};
@@ -289,11 +233,6 @@ const ViewLink = styled(Link)`
   ${viewButtonLook}
 `;
 
-/*
-  The shared Button does not accept className, so the three actions are
-  sized together from this wrapper to guarantee identical height,
-  padding and alignment.
-*/
 const RowActions = styled.div`
   display: flex;
   align-items: center;
@@ -316,7 +255,6 @@ const RowActions = styled.div`
     text-decoration: none;
   }
 
-  /* Card layout: buttons share the full width equally. */
   ${({ $stretch }) =>
     $stretch &&
     css`
@@ -331,7 +269,6 @@ const RowActions = styled.div`
       }
     `}
 
-  /* Touch screens: bigger tap targets (44px is the recommended minimum). */
   @media (pointer: coarse) {
     a,
     button {
@@ -339,8 +276,6 @@ const RowActions = styled.div`
     }
   }
 
-  /* Very narrow phones: three buttons wrap onto two rows instead of
-     being squeezed until the text is cut off. */
   @media (max-width: ${SMALL}) {
     ${({ $stretch }) =>
       $stretch &&
@@ -352,18 +287,6 @@ const RowActions = styled.div`
           flex: 1 1 72px;
         }
       `}
-  }
-`;
-
-/* ---------- Patient cards (tablet / mobile) ---------- */
-
-const CardList = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-  gap: 12px;
-
-  @media (max-width: ${PHONE}) {
-    grid-template-columns: minmax(0, 1fr);
   }
 `;
 
@@ -385,89 +308,6 @@ const PatientCard = styled.article`
   }
 `;
 
-const CardTop = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-
-  @media (max-width: ${TINY}) {
-    flex-wrap: wrap;
-  }
-`;
-
-const CardName = styled.h3`
-  margin: 0;
-  min-width: 0;
-  font-size: 16px;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-  color: ${({ theme }) => theme.colors.textPrimary};
-`;
-
-const IdBadge = styled.span`
-  flex-shrink: 0;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 600;
-
-  color: ${({ theme }) => theme.colors.textSecondary};
-  background: ${({ theme }) => theme.colors.disabled};
-
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-`;
-
-const Details = styled.dl`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
-  gap: 8px 12px;
-  margin: 0;
-
-  dt {
-    font-size: 12px;
-    color: ${({ theme }) => theme.colors.textSecondary};
-  }
-
-  dd {
-    margin: 2px 0 0;
-    font-size: 14px;
-    overflow-wrap: anywhere;
-    color: ${({ theme }) => theme.colors.textPrimary};
-  }
-
-  @media (max-width: ${TINY}) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-`;
-
-/* ---------- Pagination ---------- */
-
-const Pagination = styled.nav`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding-top: 12px;
-
-  border-top: 1px solid ${({ theme }) => theme.colors.border};
-
-  @media (max-width: ${TABLET}) {
-    justify-content: center;
-  }
-`;
-
-const PaginationInfo = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.colors.textSecondary};
-
-  @media (max-width: ${TABLET}) {
-    width: 100%;
-    text-align: center;
-  }
-`;
-
 const PaginationControls = styled.div`
   display: flex;
   align-items: center;
@@ -485,7 +325,6 @@ const PaginationControls = styled.div`
     }
   }
 
-  /* Phones: Previous / Next stretch so they are easy to hit. */
   @media (max-width: ${PHONE}) {
     width: 100%;
     gap: 8px;
@@ -497,7 +336,6 @@ const PaginationControls = styled.div`
     }
   }
 
-  /* Very narrow: "Page 1 of 3" sits above, Previous / Next share the row below. */
   @media (max-width: ${SMALL}) {
     flex-wrap: wrap;
 
@@ -507,22 +345,6 @@ const PaginationControls = styled.div`
     }
   }
 `;
-
-const PageIndicator = styled.span`
-  min-width: 84px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 500;
-  color: ${({ theme }) => theme.colors.textPrimary};
-
-  @media (max-width: ${PHONE}) {
-    flex: 0 0 auto;
-    min-width: 0;
-    font-size: 13px;
-  }
-`;
-
-/* ---------- Helpers ---------- */
 
 const emptyForm = {
   patient_name: "",
@@ -560,24 +382,23 @@ function PatientListContent() {
     deletePatient,
   } = usePatients();
 
-const [modalOpen, setModalOpen] = useState(false);
-const [editing, setEditing] = useState(null);
-const [deleteId, setDeleteId] = useState(null);
-const [form, setForm] = useState(emptyForm);
-const [query, setQuery] = useState("");
-const [page, setPage] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
 
-// The patient cache is cleared after create/update/delete: go back to page 1.
-const [seenCacheVersion, setSeenCacheVersion] = useState(cacheVersion);
+  // The patient cache is cleared after create/update/delete: go back to page 1.
+  const [seenCacheVersion, setSeenCacheVersion] = useState(cacheVersion);
 
-if (seenCacheVersion !== cacheVersion) {
-  setSeenCacheVersion(cacheVersion);
-  setPage(1);
-}
+  if (seenCacheVersion !== cacheVersion) {
+    setSeenCacheVersion(cacheVersion);
+    setPage(1);
+  }
 
-const [formError, setFormError] = useState("");
+  const [formError, setFormError] = useState("");
 
-  // Batch 1 on first load (a no-op when it is already cached).
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
@@ -604,12 +425,6 @@ const [formError, setFormError] = useState("");
     );
   }, [patients, query]);
 
-  /*
-    Browsing (no search): rows come from the server batches in Redux and the
-    count comes from the backend total.
-    Searching: the existing client-side filter runs over the patients that
-    are already loaded (see the search limitation in the pagination notes).
-  */
   const browsing = !hasSearch;
 
   const displayTotal = browsing ? total : filteredPatients.length;
@@ -624,10 +439,8 @@ const [formError, setFormError] = useState("");
 
   const startIndex = (currentPage - 1) * PAGE_SIZE;
 
-  // UI page 1,2 -> batch 1 | 3,4 -> batch 2 | 5,6 -> batch 3 ...
   const batchNumber = batchForPage(currentPage);
 
-  // 0 = first UI page of the batch (records 1-8), 1 = second (records 9-16).
   const pageWithinBatch = pageWithinBatchFor(currentPage);
 
   const currentBatch = batches[batchNumber];
@@ -652,13 +465,9 @@ const [formError, setFormError] = useState("");
         startIndex + PAGE_SIZE,
       );
 
-  // Show the bar when there is more than one page, or when the current batch
-  // failed (so Retry stays reachable even if nothing could be counted).
   const showPagination =
     displayTotal > PAGE_SIZE || Boolean(currentBatchError);
 
-  // Second UI page of the batch: load the following batch in the background,
-  // once, and only if the server says there is more.
   const shouldPrefetchNextBatch =
     browsing &&
     hasMore &&
@@ -668,9 +477,6 @@ const [formError, setFormError] = useState("");
     !inFlight[nextBatchNumber] &&
     !batchErrors[nextBatchNumber];
 
-  // Load the batch the current page needs. The saga skips it if it is
-  // already cached or in flight, and a failed batch is not retried
-  // automatically (the user presses Retry).
   useEffect(() => {
     if (
       browsing &&
@@ -695,7 +501,6 @@ const [formError, setFormError] = useState("");
     }
   }, [shouldPrefetchNextBatch, nextBatchNumber, fetchPatients]);
 
-  // Retry re-requests only the batch the current page belongs to.
   const retryCurrentBatch = () => fetchPatients(batchNumber);
 
   const handleSearchChange = (event) => {
@@ -703,48 +508,49 @@ const [formError, setFormError] = useState("");
     setPage(1);
   };
 
- const openCreate = () => {
-  setEditing(null);
-  setForm(emptyForm);
-  setFormError("");
-  setModalOpen(true);
-};
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyForm);
+    setFormError("");
+    setModalOpen(true);
+  };
 
- const openEdit = (patient) => {
-  setEditing(patient);
+  const openEdit = (patient) => {
+    setEditing(patient);
 
-  setFormError("");
+    setFormError("");
 
-  setForm({
-    ...emptyForm,
-    ...patient,
-    medical_data: patient.medical_data || "",
-  });
+    setForm({
+      ...emptyForm,
+      ...patient,
+      medical_data: patient.medical_data || "",
+    });
 
-  setModalOpen(true);
-};
-const submit = (event) => {
-  event.preventDefault();
+    setModalOpen(true);
+  };
 
-  setFormError("");
+  const submit = (event) => {
+    event.preventDefault();
 
-  const mobile = form.mobile.trim();
+    setFormError("");
 
-  if (!/^[6-9]\d{9}$/.test(mobile)) {
-    setFormError(
-      "Enter a valid 10-digit mobile number"
-    );
-    return;
-  }
+    const mobile = form.mobile.trim();
 
-  if (editing) {
-    updatePatient(editing.id, form);
-  } else {
-    createPatient(form);
-  }
+    if (!/^[6-9]\d{9}$/.test(mobile)) {
+      setFormError(
+        "Enter a valid 10-digit mobile number"
+      );
+      return;
+    }
 
-  setModalOpen(false);
-};
+    if (editing) {
+      updatePatient(editing.id, form);
+    } else {
+      createPatient(form);
+    }
+
+    setModalOpen(false);
+  };
 
   const renderActions = (row, stretch = false) => (
     <RowActions $stretch={stretch}>
@@ -760,7 +566,7 @@ const submit = (event) => {
     {
       key: "id",
       label: "ID",
-      render: (row) => <IdText>#{row.id}</IdText>,
+      render: (row) => <IdText>{row.id}</IdText>,
     },
     {
       key: "patient_name",
@@ -846,46 +652,46 @@ const submit = (event) => {
           ) : (
             <>
               {visiblePatients.length > 0 && (
-              <>
-              <DesktopOnly $reserveSpace={showPagination}>
-                <Table columns={columns} data={visiblePatients} />
-              </DesktopOnly>
+                <>
+                  <DesktopOnly $reserveSpace={showPagination}>
+                    <Table columns={columns} data={visiblePatients} />
+                  </DesktopOnly>
 
-              <CardsOnly>
-                <CardList>
-                  {visiblePatients.map((patient) => (
-                    <PatientCard key={patient.id}>
-                      <CardTop>
-                        <CardName>{show(patient.patient_name)}</CardName>
+                  <CardsOnly>
+                    <CardList>
+                      {visiblePatients.map((patient) => (
+                        <PatientCard key={patient.id}>
+                          <CardTop>
+                            <CardName>{show(patient.patient_name)}</CardName>
 
-                        <IdBadge>ID {patient.id}</IdBadge>
-                      </CardTop>
+                            <IdBadge>ID {patient.id}</IdBadge>
+                          </CardTop>
 
-                      <Details>
-                        <div>
-                          <dt>Mobile</dt>
-                          <dd>{show(patient.mobile)}</dd>
-                        </div>
+                          <Details>
+                            <div>
+                              <dt>Mobile</dt>
+                              <dd>{show(patient.mobile)}</dd>
+                            </div>
 
-                        <div>
-                          <dt>Gender</dt>
-                          <dd>
-                            <GenderText>{show(patient.gender)}</GenderText>
-                          </dd>
-                        </div>
+                            <div>
+                              <dt>Gender</dt>
+                              <dd>
+                                <GenderText>{show(patient.gender)}</GenderText>
+                              </dd>
+                            </div>
 
-                        <div>
-                          <dt>Date of Birth</dt>
-                          <dd>{show(patient.date_of_birth)}</dd>
-                        </div>
-                      </Details>
+                            <div>
+                              <dt>Date of Birth</dt>
+                              <dd>{show(patient.date_of_birth)}</dd>
+                            </div>
+                          </Details>
 
-                      {renderActions(patient, true)}
-                    </PatientCard>
-                  ))}
-                </CardList>
-              </CardsOnly>
-              </>
+                          {renderActions(patient, true)}
+                        </PatientCard>
+                      ))}
+                    </CardList>
+                  </CardsOnly>
+                </>
               )}
 
               {showPagination && (
@@ -939,31 +745,32 @@ const submit = (event) => {
                 disabled={actionLoading}
               />
 
-            <Input
-  label="Mobile"
-  name="mobile"
-  type="tel"
-  value={form.mobile}
-  onChange={(e) => {
-    const value = e.target.value.replace(/\D/g, "");
+              <Input
+                label="Mobile"
+                name="mobile"
+                type="tel"
+                value={form.mobile}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
 
-    setForm({
-      ...form,
-      mobile: value,
-    });
+                  setForm({
+                    ...form,
+                    mobile: value,
+                  });
 
-    if (formError) {
-      setFormError("");
-    }
-  }}
-  required
-  maxLength={10}
-  disabled={actionLoading}
-/>
+                  if (formError) {
+                    setFormError("");
+                  }
+                }}
+                required
+                maxLength={10}
+                disabled={actionLoading}
+              />
 
-{formError && (
-  <FormError>{formError}</FormError>
-)}
+              {formError && (
+                <FormError>{formError}</FormError>
+              )}
+
               <Input
                 label="Email"
                 name="email"

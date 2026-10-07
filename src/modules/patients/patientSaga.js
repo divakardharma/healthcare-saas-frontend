@@ -1,10 +1,4 @@
-import {
-  call,
-  put,
-  select,
-  takeEvery,
-  takeLatest,
-} from "redux-saga/effects";
+import { call, put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 import {
   getPatientsAPI,
@@ -30,105 +24,60 @@ import {
   patientActionFailure,
 } from "./patientSlice";
 
-import {
-  decryptData,
-} from "../../services/encryptionService";
+import { decryptData } from "../../services/encryptionService";
 
-import {
-  saveOfflineRecord,
-} from "../../utils/offlineDB";
+import { saveOfflineRecord } from "../../utils/offlineDB";
 
-import {
-  isRetryableOfflineError,
-} from "../offline/offlineUtils";
+import { isRetryableOfflineError } from "../offline/offlineUtils";
 
-import {
-  queueItem,
-  processQueue,
-} from "../offline/offlineSlice";
+import { queueItem, processQueue } from "../offline/offlineSlice";
 
-const decryptResponse =
-  (response) =>
-    decryptData(
-      response.data.payload
-    );
+const decryptResponse = (response) => decryptData(response.data.payload);
 
-const getErrorMessage = (
-  error,
-  fallback
-) => {
+const getErrorMessage = (error, fallback) => {
   try {
-    const payload =
-      error.response?.data
-        ?.payload;
+    const payload = error.response?.data?.payload;
 
     if (payload) {
       return (
-        decryptData(
-          payload
-        )?.message ||
-        fallback
+        decryptData(payload)?.message || fallback
       );
     }
   } catch (_) {}
 
   return (
-    error.response?.data
-      ?.message ||
-    error.message ||
-    fallback
+    error.response?.data?.message || error.message || fallback
   );
 };
 
-const selectPatients = (
-  state
-) => state.patients;
+const selectPatients = (state) => state.patients;
 
-const selectOfflineScope = (
-  state
-) => {
-  const user =
-    state.auth?.user;
+const selectOfflineScope = (state) => {
+  const user = state.auth?.user;
 
-  const tenant =
-    state.tenant?.tenant;
+  const tenant = state.tenant?.tenant;
 
-  const userId =
-    user?.id ??
-    user?.user_id ??
-    user?.email;
+  const userId = user?.id ?? user?.user_id ?? user?.email;
 
   const tenantId =
-    tenant?.id ??
-    tenant?.tenant_id ??
-    tenant?.subdomain ??
-    tenant?.name;
+    tenant?.id ?? tenant?.tenant_id ?? tenant?.subdomain ?? tenant?.name;
 
-  if (
-    userId == null ||
-    tenantId == null
-  ) {
+  if (userId == null || tenantId == null) {
     return null;
   }
 
-  const userKey =
-    String(userId).trim();
+  const userKey = String(userId).trim();
 
-  const tenantKey =
-    String(tenantId).trim();
+  const tenantKey = String(tenantId).trim();
 
-  if (
-    !userKey ||
-    !tenantKey
-  ) {
+  if (!userKey || !tenantKey) {
     return null;
   }
 
   return {
     userKey,
     tenantKey,
-    scopeKey:
-      `${tenantKey}::${userKey}`,
+    scopeKey: `${tenantKey}::${userKey}`,
   };
 };
 
@@ -138,31 +87,20 @@ const selectOfflineScope = (
  * ---------------------------------------------------------
  */
 
-function* enqueueOffline({
-  type,
-  payload,
-  meta,
-}) {
+function* enqueueOffline({ type, payload, meta }) {
   try {
-    const scope =
-      yield select(
-        selectOfflineScope
-      );
+    const scope = yield select(selectOfflineScope);
 
     /*
      * Save encrypted payload
      * into IndexedDB.
      */
-    const record =
-      yield call(
-        saveOfflineRecord,
-        {
-          type,
-          payload,
-          meta,
-          scope,
-        }
-      );
+    const record = yield call(saveOfflineRecord, {
+      type,
+      payload,
+      meta,
+      scope,
+    });
 
     /*
      * Redux only stores
@@ -170,28 +108,19 @@ function* enqueueOffline({
      */
     yield put(
       queueItem({
-        id:
-          record.id,
+        id: record.id,
 
-        type:
-          record.type,
+        type: record.type,
 
-        meta:
-          record.meta,
+        meta: record.meta,
 
-        createdAt:
-          record.createdAt,
+        createdAt: record.createdAt,
       })
     );
 
     return true;
-  } catch (
-    error
-  ) {
-    console.error(
-      "Failed to enqueue offline record:",
-      error
-    );
+  } catch (error) {
+    console.error("Failed to enqueue offline record:", error);
 
     return false;
   }
@@ -203,32 +132,16 @@ function* enqueueOffline({
  * ---------------------------------------------------------
  */
 
-function* fetchPatients(
-  action
-) {
-  const {
-    page,
-    prefetch,
-  } =
-    action.payload;
+function* fetchPatients(action) {
+  const { page, prefetch } = action.payload;
 
-  const {
-    batches,
-    inFlight,
-    cacheVersion,
-  } =
-    yield select(
-      selectPatients
-    );
+  const { batches, inFlight, cacheVersion } = yield select(selectPatients);
 
   /*
    * Prevent duplicate
    * requests.
    */
-  if (
-    batches[page] ||
-    inFlight[page]
-  ) {
+  if (batches[page] || inFlight[page]) {
     return;
   }
 
@@ -240,66 +153,35 @@ function* fetchPatients(
   );
 
   try {
-    const result =
-      decryptResponse(
-        yield call(
-          getPatientsAPI,
-          page
-        )
-      );
+    const result = decryptResponse(yield call(getPatientsAPI, page));
 
-    const patients =
-      Array.isArray(
-        result.data
-      )
-        ? result.data
-        : [];
+    const patients = Array.isArray(result.data) ? result.data : [];
 
-    const pagination =
-      result.pagination ||
-      {};
+    const pagination = result.pagination || {};
 
     yield put(
-      fetchPatientsSuccess(
-        {
-          page,
-          version:
-            cacheVersion,
+      fetchPatientsSuccess({
+        page,
+        version: cacheVersion,
 
-          patients,
+        patients,
 
-          total:
-            Number.isFinite(
-              pagination.total
-            )
-              ? pagination.total
-              : patients.length,
+        total: Number.isFinite(pagination.total)
+          ? pagination.total
+          : patients.length,
 
-          hasMore:
-            Boolean(
-              pagination.has_more
-            ),
-        }
-      )
+        hasMore: Boolean(pagination.has_more),
+      })
     );
-  } catch (
-    error
-  ) {
+  } catch (error) {
     yield put(
-      fetchPatientsFailure(
-        {
-          page,
+      fetchPatientsFailure({
+        page,
 
-          version:
-            cacheVersion,
+        version: cacheVersion,
 
-          message:
-            getErrorMessage(
-              error,
-              "Failed to fetch patients"
-            ),
-        }
-      )
+        message: getErrorMessage(error, "Failed to fetch patients"),
+      })
     );
   }
 }
@@ -311,15 +193,9 @@ function* fetchPatients(
  */
 
 function* refreshPatientsAfterChange() {
-  yield put(
-    resetPatientBatches()
-  );
+  yield put(resetPatientBatches());
 
-  yield put(
-    fetchPatientsRequest(
-      1
-    )
-  );
+  yield put(fetchPatientsRequest(1));
 }
 
 /*
@@ -328,33 +204,14 @@ function* refreshPatientsAfterChange() {
  * ---------------------------------------------------------
  */
 
-function* fetchPatient(
-  action
-) {
+function* fetchPatient(action) {
   try {
-    const result =
-      decryptResponse(
-        yield call(
-          getPatientAPI,
-          action.payload
-        )
-      );
+    const result = decryptResponse(yield call(getPatientAPI, action.payload));
 
+    yield put(fetchPatientSuccess(result.data));
+  } catch (error) {
     yield put(
-      fetchPatientSuccess(
-        result.data
-      )
-    );
-  } catch (
-    error
-  ) {
-    yield put(
-      fetchPatientFailure(
-        getErrorMessage(
-          error,
-          "Failed to fetch patient"
-        )
-      )
+      fetchPatientFailure(getErrorMessage(error, "Failed to fetch patient"))
     );
   }
 }
@@ -365,18 +222,10 @@ function* fetchPatient(
  * ---------------------------------------------------------
  */
 
-function* createPatient(
-  action
-) {
-  const data =
-    action.payload;
+function* createPatient(action) {
+  const data = action.payload;
 
-  const isOnline =
-    yield select(
-      (state) =>
-        state.offline
-          .isOnline
-    );
+  const isOnline = yield select((state) => state.offline.isOnline);
 
   /*
    * OFFLINE
@@ -384,36 +233,24 @@ function* createPatient(
    * Never call the API.
    */
   if (!isOnline) {
-    const queued =
-      yield call(
-        enqueueOffline,
-        {
-          type:
-            "CREATE_PATIENT",
+    const queued = yield call(enqueueOffline, {
+      type: "CREATE_PATIENT",
 
-          payload:
-            data,
+      payload: data,
 
-          meta: {
-            displayName:
-              data?.full_name ||
-              data?.name ||
-              "New patient",
-          },
-        }
-      );
+      meta: {
+        displayName: data?.full_name || data?.name || "New patient",
+      },
+    });
 
     if (queued) {
       yield put(
-        patientActionSuccess(
-          {
-            offline:
-              true,
+        patientActionSuccess({
+          offline: true,
 
-            message:
-              "You are offline. Patient saved to offline queue and will sync when connection is restored.",
-          }
-        )
+          message:
+            "You are offline. Patient saved to offline queue and will sync when connection is restored.",
+        })
       );
     } else {
       yield put(
@@ -431,42 +268,19 @@ function* createPatient(
    */
 
   try {
-    const result =
-      decryptResponse(
-        yield call(
-          createPatientAPI,
-          data
-        )
-      );
+    const result = decryptResponse(yield call(createPatientAPI, data));
 
-    yield put(
-      patientActionSuccess(
-        result.data
-      )
-    );
+    yield put(patientActionSuccess(result.data));
 
-    yield call(
-      refreshPatientsAfterChange
-    );
-  } catch (
-    error
-  ) {
+    yield call(refreshPatientsAfterChange);
+  } catch (error) {
     /*
      * Validation/auth/permission errors
      * are not offline failures.
      */
-    if (
-      !isRetryableOfflineError(
-        error
-      )
-    ) {
+    if (!isRetryableOfflineError(error)) {
       yield put(
-        patientActionFailure(
-          getErrorMessage(
-            error,
-            "Failed to create patient"
-          )
-        )
+        patientActionFailure(getErrorMessage(error, "Failed to create patient"))
       );
 
       return;
@@ -478,53 +292,34 @@ function* createPatient(
      *
      * Preserve mutation in IndexedDB.
      */
-    const queued =
-      yield call(
-        enqueueOffline,
-        {
-          type:
-            "CREATE_PATIENT",
+    const queued = yield call(enqueueOffline, {
+      type: "CREATE_PATIENT",
 
-          payload:
-            data,
+      payload: data,
 
-          meta: {
-            displayName:
-              data?.full_name ||
-              data?.name ||
-              "New patient",
-          },
-        }
-      );
+      meta: {
+        displayName: data?.full_name || data?.name || "New patient",
+      },
+    });
 
     if (queued) {
       yield put(
-        patientActionSuccess(
-          {
-            offline:
-              true,
+        patientActionSuccess({
+          offline: true,
 
-            message:
-              "Network error. Patient saved to offline queue and will sync when connection is restored.",
-          }
-        )
+          message:
+            "Network error. Patient saved to offline queue and will sync when connection is restored.",
+        })
       );
 
       /*
        * The queue processor is protected by
        * takeLeading, so this is safe.
        */
-      yield put(
-        processQueue()
-      );
+      yield put(processQueue());
     } else {
       yield put(
-        patientActionFailure(
-          getErrorMessage(
-            error,
-            "Failed to create patient"
-          )
-        )
+        patientActionFailure(getErrorMessage(error, "Failed to create patient"))
       );
     }
   }
@@ -536,61 +331,38 @@ function* createPatient(
  * ---------------------------------------------------------
  */
 
-function* updatePatient(
-  action
-) {
-  const {
-    id,
-    data,
-  } =
-    action.payload;
+function* updatePatient(action) {
+  const { id, data } = action.payload;
 
-  const isOnline =
-    yield select(
-      (state) =>
-        state.offline
-          .isOnline
-    );
+  const isOnline = yield select((state) => state.offline.isOnline);
 
   /*
    * OFFLINE
    */
   if (!isOnline) {
-    const queued =
-      yield call(
-        enqueueOffline,
-        {
-          type:
-            "UPDATE_PATIENT",
+    const queued = yield call(enqueueOffline, {
+      type: "UPDATE_PATIENT",
 
-          payload: {
-            id,
-            data,
-          },
+      payload: {
+        id,
+        data,
+      },
 
-          meta: {
-            displayName:
-              data?.full_name ||
-              data?.name ||
-              `Patient #${id}`,
+      meta: {
+        displayName: data?.full_name || data?.name || `Patient #${id}`,
 
-            patientId:
-              id,
-          },
-        }
-      );
+        patientId: id,
+      },
+    });
 
     if (queued) {
       yield put(
-        patientActionSuccess(
-          {
-            offline:
-              true,
+        patientActionSuccess({
+          offline: true,
 
-            message:
-              "You are offline. Update saved to offline queue and will sync when connection is restored.",
-          }
-        )
+          message:
+            "You are offline. Update saved to offline queue and will sync when connection is restored.",
+        })
       );
     } else {
       yield put(
@@ -608,43 +380,19 @@ function* updatePatient(
    */
 
   try {
-    const result =
-      decryptResponse(
-        yield call(
-          updatePatientAPI,
-          id,
-          data
-        )
-      );
+    const result = decryptResponse(yield call(updatePatientAPI, id, data));
 
-    yield put(
-      patientActionSuccess(
-        result.data
-      )
-    );
+    yield put(patientActionSuccess(result.data));
 
-    yield call(
-      refreshPatientsAfterChange
-    );
-  } catch (
-    error
-  ) {
+    yield call(refreshPatientsAfterChange);
+  } catch (error) {
     /*
      * Validation/auth/permission errors
      * must not enter the offline queue.
      */
-    if (
-      !isRetryableOfflineError(
-        error
-      )
-    ) {
+    if (!isRetryableOfflineError(error)) {
       yield put(
-        patientActionFailure(
-          getErrorMessage(
-            error,
-            "Failed to update patient"
-          )
-        )
+        patientActionFailure(getErrorMessage(error, "Failed to update patient"))
       );
 
       return;
@@ -654,54 +402,35 @@ function* updatePatient(
      * Retryable API/network failure
      * goes to IndexedDB.
      */
-    const queued =
-      yield call(
-        enqueueOffline,
-        {
-          type:
-            "UPDATE_PATIENT",
+    const queued = yield call(enqueueOffline, {
+      type: "UPDATE_PATIENT",
 
-          payload: {
-            id,
-            data,
-          },
+      payload: {
+        id,
+        data,
+      },
 
-          meta: {
-            displayName:
-              data?.full_name ||
-              data?.name ||
-              `Patient #${id}`,
+      meta: {
+        displayName: data?.full_name || data?.name || `Patient #${id}`,
 
-            patientId:
-              id,
-          },
-        }
-      );
+        patientId: id,
+      },
+    });
 
     if (queued) {
       yield put(
-        patientActionSuccess(
-          {
-            offline:
-              true,
+        patientActionSuccess({
+          offline: true,
 
-            message:
-              "Network error. Update saved to offline queue and will sync when connection is restored.",
-          }
-        )
+          message:
+            "Network error. Update saved to offline queue and will sync when connection is restored.",
+        })
       );
 
-      yield put(
-        processQueue()
-      );
+      yield put(processQueue());
     } else {
       yield put(
-        patientActionFailure(
-          getErrorMessage(
-            error,
-            "Failed to update patient"
-          )
-        )
+        patientActionFailure(getErrorMessage(error, "Failed to update patient"))
       );
     }
   }
@@ -713,32 +442,16 @@ function* updatePatient(
  * ---------------------------------------------------------
  */
 
-function* deletePatient(
-  action
-) {
+function* deletePatient(action) {
   try {
-    yield call(
-      deletePatientAPI,
-      action.payload
-    );
+    yield call(deletePatientAPI, action.payload);
 
-    yield put(
-      patientActionSuccess({})
-    );
+    yield put(patientActionSuccess({}));
 
-    yield call(
-      refreshPatientsAfterChange
-    );
-  } catch (
-    error
-  ) {
+    yield call(refreshPatientsAfterChange);
+  } catch (error) {
     yield put(
-      patientActionFailure(
-        getErrorMessage(
-          error,
-          "Failed to delete patient"
-        )
-      )
+      patientActionFailure(getErrorMessage(error, "Failed to delete patient"))
     );
   }
 }
@@ -755,28 +468,13 @@ export default function* patientSaga() {
    * prefetch and page requests
    * can legitimately overlap.
    */
-  yield takeEvery(
-    fetchPatientsRequest.type,
-    fetchPatients
-  );
+  yield takeEvery(fetchPatientsRequest.type, fetchPatients);
 
-  yield takeLatest(
-    fetchPatientRequest.type,
-    fetchPatient
-  );
+  yield takeLatest(fetchPatientRequest.type, fetchPatient);
 
-  yield takeLatest(
-    createPatientRequest.type,
-    createPatient
-  );
+  yield takeLatest(createPatientRequest.type, createPatient);
 
-  yield takeLatest(
-    updatePatientRequest.type,
-    updatePatient
-  );
+  yield takeLatest(updatePatientRequest.type, updatePatient);
 
-  yield takeLatest(
-    deletePatientRequest.type,
-    deletePatient
-  );
+  yield takeLatest(deletePatientRequest.type, deletePatient);
 }
