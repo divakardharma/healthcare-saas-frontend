@@ -21,6 +21,7 @@ import useAppointments from "../../modules/appointments/hooks/useAppointments";
 import usePatients from "../../modules/patients/hooks/usePatients";
 import useAuth from "../../modules/auth/hooks/useAuth";
 import useUsers from "../../modules/users/hooks/useUsers";
+import useNotes from "../../modules/notes/hooks/useNotes";
 
 const Form = styled.form`
   display: grid;
@@ -320,7 +321,7 @@ const StatusBadge = styled.span`
 const RowActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   flex-wrap: nowrap;
 
   button {
@@ -329,9 +330,9 @@ const RowActions = styled.div`
     justify-content: center;
     box-sizing: border-box;
     height: var(--button-height, 30px);
-    min-width: 72px;
-    padding: 0 14px;
-    font-size: 14px;
+    min-width: 60px;
+    padding: 0 8px;
+    font-size: 13px;
     font-weight: 500;
     line-height: 1;
     white-space: nowrap;
@@ -571,6 +572,17 @@ function AppointmentListContent() {
     fetchPatients,
   } = usePatients();
 
+  const {
+  notes,
+  loading: notesLoading,
+  error: notesError,
+  loadNotes,
+  createNewNote,
+  updateExistingNote,
+  deleteExistingNote,
+  resetNotes,
+} = useNotes();
+
   const [modalOpen, setModalOpen] =
     useState(false);
 
@@ -579,6 +591,11 @@ function AppointmentListContent() {
 
   const [cancelId, setCancelId] =
     useState(null);
+
+  const [notesModalOpen, setNotesModalOpen] = useState(false);
+const [selectedAppointment, setSelectedAppointment] = useState(null);
+const [noteText, setNoteText] = useState("");
+const [editingNoteId, setEditingNoteId] = useState(null);
 
   const [form, setForm] = useState({
     patient_id: "",
@@ -620,6 +637,14 @@ function AppointmentListContent() {
     fetchPatients,
     fetchUsers
   ]);
+  const openNotes = (appointment) => {
+  setSelectedAppointment(appointment);
+  setEditingNoteId(null);
+  setNoteText("");
+  resetNotes();
+  loadNotes(appointment.id);
+  setNotesModalOpen(true);
+};
 
   /*
     Pagination: the API sends 20 appointments per request, the table shows 10.
@@ -795,6 +820,13 @@ if (!form.patient_id || !form.provider_id) {
   // complete (PATCH .../status). There is no delete or detail page.
   const renderActions = (row, stretch = false) => (
     <RowActions $stretch={stretch}>
+      
+      <Button
+  onClick={() => openNotes(row)}
+  disabled={actionLoading}
+>
+  Notes
+</Button>
       <Button
         onClick={() => openEdit(row)}
         disabled={actionLoading}
@@ -999,6 +1031,133 @@ if (!form.patient_id || !form.provider_id) {
           </>
         )}
       </Card>
+
+      <Modal
+  isOpen={notesModalOpen}
+  title={
+    selectedAppointment
+      ? `Notes - Appointment #${selectedAppointment.id}`
+      : "Appointment Notes"
+  }
+  onClose={() => {
+    setNotesModalOpen(false);
+    setSelectedAppointment(null);
+    setEditingNoteId(null);
+    setNoteText("");
+    resetNotes();
+  }}
+>
+  <div>
+    {notesLoading && <p>Loading notes...</p>}
+
+    {notesError && (
+      <p style={{ color: "red" }}>
+        {notesError}
+      </p>
+    )}
+
+    {!notesLoading && !notesError && notes.length === 0 && (
+      <p>No notes added yet.</p>
+    )}
+
+    {!notesLoading &&
+      notes.map((note) => (
+        <div
+          key={note.id}
+          style={{
+            padding: "12px",
+            marginBottom: "10px",
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+          }}
+        >
+          <p style={{ margin: "0 0 8px" }}>
+            {note.note}
+          </p>
+
+          <small style={{ color: "#666" }}>
+            Added on:{" "}
+            {new Date(note.created_at).toLocaleString()}
+          </small>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              marginTop: "10px",
+            }}
+          >
+            <Button
+              onClick={() => {
+                setEditingNoteId(note.id);
+                setNoteText(note.note);
+              }}
+            >
+              Edit
+            </Button>
+
+            <Button
+              onClick={() =>
+                deleteExistingNote(
+                  note.id,
+                  selectedAppointment.id
+                )
+              }
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+      ))}
+
+    <div style={{ marginTop: "16px" }}>
+      <textarea
+        value={noteText}
+        onChange={(e) => setNoteText(e.target.value)}
+        placeholder={
+          editingNoteId
+            ? "Edit note..."
+            : "Enter a new note..."
+        }
+        rows={4}
+        style={{
+          width: "100%",
+          padding: "10px",
+          border: "1px solid #ccc",
+          borderRadius: "8px",
+          resize: "vertical",
+          boxSizing: "border-box",
+        }}
+      />
+
+      <Button
+        style={{ marginTop: "10px" }}
+        onClick={() => {
+          if (!noteText.trim()) return;
+
+          if (editingNoteId) {
+            updateExistingNote(
+              editingNoteId,
+              { note: noteText.trim() },
+              selectedAppointment.id
+            );
+          } else {
+createNewNote({
+  appointment_id: selectedAppointment.id,
+  user_id: user.id,
+  note: noteText.trim(),
+});
+          }
+
+          setNoteText("");
+          setEditingNoteId(null);
+        }}
+      >
+        {editingNoteId ? "Update Note" : "Add Note"}
+      </Button>
+    </div>
+  </div>
+</Modal>
 
       <Modal
         isOpen={modalOpen}

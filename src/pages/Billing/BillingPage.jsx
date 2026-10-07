@@ -24,6 +24,26 @@ const [appointments, setAppointments] = useState([]);
     changePaymentStatus
   } = useBilling();
 
+    const calculatedSummary = {
+    total_invoices: billing.length,
+    total_amount: billing.reduce(
+      (total, invoice) => total + Number(invoice.amount || 0),
+      0
+    ),
+    paid_amount: billing
+      .filter((invoice) => invoice.payment_status === "Paid")
+      .reduce(
+        (total, invoice) => total + Number(invoice.amount || 0),
+        0
+      ),
+    pending_amount: billing
+      .filter((invoice) => invoice.payment_status === "Pending")
+      .reduce(
+        (total, invoice) => total + Number(invoice.amount || 0),
+        0
+      )
+  };
+
   const [showForm, setShowForm] = useState(false);
   const [editingBilling, setEditingBilling] = useState(null);
 
@@ -41,6 +61,10 @@ const [appointments, setAppointments] = useState([]);
 
   const canManageBilling = isAdmin || isProvider;
   const canViewBilling = isAdmin || isProvider || isNurse;
+const filteredAppointments = appointments.filter(
+  (appointment) =>
+    String(appointment.patient_id) === String(formData.patient_id)
+);
 
  useEffect(() => {
   if (canViewBilling) {
@@ -68,14 +92,15 @@ const [appointments, setAppointments] = useState([]);
   }
 }, [canViewBilling, canManageBilling]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+const handleChange = (e) => {
+  const { name, value } = e.target;
 
-    setFormData((previous) => ({
-      ...previous,
-      [name]: value
-    }));
-  };
+  setFormData((previous) => ({
+    ...previous,
+    [name]: value,
+    ...(name === "patient_id" ? { appointment_id: "" } : {})
+  }));
+};
 
   const resetForm = () => {
     setFormData({
@@ -190,27 +215,27 @@ const [appointments, setAppointments] = useState([]);
         <div className="billing-summary">
           <div className="billing-card">
             <span>Total Invoices</span>
-            <strong>{summary?.total_invoices || 0}</strong>
+            <strong>{calculatedSummary.total_invoices}</strong>
           </div>
 
           <div className="billing-card">
             <span>Total Amount</span>
             <strong>
-              ₹{Number(summary?.total_amount || 0).toFixed(2)}
+              ₹{calculatedSummary.total_amount.toFixed(2)}
             </strong>
           </div>
 
           <div className="billing-card">
             <span>Paid Amount</span>
             <strong>
-              ₹{Number(summary?.paid_amount || 0).toFixed(2)}
+              ₹{calculatedSummary.paid_amount.toFixed(2)}
             </strong>
           </div>
 
           <div className="billing-card">
             <span>Pending Amount</span>
             <strong>
-              ₹{Number(summary?.pending_amount || 0).toFixed(2)}
+              ₹{calculatedSummary.pending_amount.toFixed(2)}
             </strong>
           </div>
         </div>
@@ -234,41 +259,58 @@ const [appointments, setAppointments] = useState([]);
 
             <form onSubmit={handleSubmit}>
               <div className="billing-form-grid">
-                <div className="billing-field">
-                  <label>Patient ID</label>
-                  <select
-  className="form-input"
-  name="patient_id"
-  value={formData.patient_id}
-  onChange={handleChange}
-  required
->
-  <option value="">Select Patient</option>
-  {patients.map((patient) => (
-    <option key={patient.id} value={patient.id}>
-      {patient.id} - {patient.full_name}
-    </option>
-  ))}
-</select>
-                </div>
+              <div className="billing-field">
+  <label>Patient</label>
+  <select
+    className="form-input"
+    name="patient_id"
+    value={formData.patient_id}
+    onChange={handleChange}
+    required
+  >
+    <option value="">Select a patient</option>
+    {patients.map((patient) => (
+      <option key={patient.id} value={patient.id}>
+        {patient.full_name} (ID: {patient.id})
+      </option>
+    ))}
+  </select>
+  <small className="billing-field-hint">
+    Select the patient for this invoice
+  </small>
+</div>
 
-                <div className="billing-field">
-                  <label>Appointment ID</label>
-<select
-  className="form-input"
-  name="appointment_id"
-  value={formData.appointment_id}
-  onChange={handleChange}
-  required
->
-  <option value="">Select Appointment</option>
-  {appointments.map((appointment) => (
-    <option key={appointment.id} value={appointment.id}>
-      Appointment #{appointment.id} - Patient #{appointment.patient_id}
+<div className="billing-field">
+  <label>Appointment</label>
+  <select
+    className="form-input"
+    name="appointment_id"
+    value={formData.appointment_id}
+    onChange={handleChange}
+    required
+    disabled={!formData.patient_id}
+  >
+    <option value="">
+      {formData.patient_id
+        ? "Select an appointment"
+        : "Select a patient first"}
     </option>
-  ))}
-</select>
-                </div>
+
+    {filteredAppointments.map((appointment) => (
+      <option key={appointment.id} value={appointment.id}>
+        Appointment #{appointment.id} —{" "}
+        {appointment.appointment_date} at{" "}
+        {appointment.appointment_time}
+      </option>
+    ))}
+  </select>
+
+  <small className="billing-field-hint">
+    {formData.patient_id
+      ? "Only this patient's appointments are shown"
+      : "Choose a patient first"}
+  </small>
+</div>
 
                 <div className="billing-field">
                   <label>Amount</label>
@@ -483,7 +525,46 @@ const [appointments, setAppointments] = useState([]);
           border-radius: 10px;
           padding: 20px;
         }
+.billing-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
 
+.billing-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.billing-field .form-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.billing-field .form-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.billing-field .form-input:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.billing-field-hint {
+  font-size: 11px;
+  color: #6b7280;
+}
         .billing-card span {
           display: block;
           color: #6b7280;

@@ -16,6 +16,8 @@ import prescriptionReducer from "../modules/prescription/prescriptionSlice";
 import staffReducer from "../modules/staff/staffSlice";
 import billingReducer from "../modules/billing/billingSlice";
 import notificationsReducer from "../modules/notifications/notificationsSlice";
+import notesReducer from "../modules/notes/notesSlice";
+import medicineReducer from "../modules/medicines/medicineSlice";
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -30,6 +32,8 @@ const rootReducer = combineReducers({
   billing: billingReducer,
   notifications: notificationsReducer,
   chat: chatReducer,
+  notes: notesReducer,
+  medicines: medicineReducer
 });
 
 export default rootReducer;

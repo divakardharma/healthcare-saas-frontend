@@ -60,14 +60,14 @@ function AppRouter() {
               </Protected>
             }
           />
-          <Route
-            path="/prescriptions"
-            element={
-              <Protected>
-                <PrescriptionPage />
-              </Protected>
-            }
-          />
+<Route
+  path="/prescriptions"
+  element={
+    <RoleBasedRoute allowedRoles={["Provider", "Pharmacist"]}>
+      <PrescriptionPage />
+    </RoleBasedRoute>
+  }
+/>
 <Route
   path="/staff"
   element={
