@@ -163,7 +163,7 @@ function Sidebar({ isOpen, onClose }) {
             )}
 
           {/* Existing modules - untouched */}
-          {hasRole(["Admin", "Provider", "Pharmacist"]) && (
+          {hasRole(["Provider", "Pharmacist"]) && (
             <SidebarLink
               to="/prescriptions"
               onClick={onClose}
