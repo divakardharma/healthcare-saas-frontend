@@ -62,6 +62,7 @@ function* createPrescriptionSaga(action) {
   try {
     const response = yield call(createPrescriptionAPI, action.payload);
     yield put(createPrescriptionSuccess(response.data || response));
+    yield put(fetchPrescriptions());
   } catch (error) {
   if (error.response?.data?.payload) {
     try {
@@ -85,6 +86,7 @@ function* updatePrescriptionSaga(action) {
     const { id, data } = action.payload;
     yield call(updatePrescriptionAPI, id, data);
     yield put(updatePrescriptionSuccess());
+    yield put(fetchPrescriptions());
   } catch (error) {
     yield put(
       updatePrescriptionFailure(
@@ -98,6 +100,7 @@ function* deletePrescriptionSaga(action) {
   try {
     yield call(deletePrescriptionAPI, action.payload);
     yield put(deletePrescriptionSuccess(action.payload));
+    yield put(fetchPrescriptions());
   } catch (error) {
     yield put(
       deletePrescriptionFailure(
@@ -112,6 +115,7 @@ function* updatePrescriptionStatusSaga(action) {
     const { id, data } = action.payload;
     yield call(updatePrescriptionStatusAPI, id, data);
     yield put(updatePrescriptionStatusSuccess());
+    yield put(fetchPrescriptions());
   } catch (error) {
     yield put(
       updatePrescriptionStatusFailure(

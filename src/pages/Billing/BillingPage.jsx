@@ -111,10 +111,10 @@ const [appointments, setAppointments] = useState([]);
 
     resetForm();
 
-    setTimeout(() => {
-      loadBilling();
-      loadPaymentSummary();
-    }, 500);
+    // setTimeout(() => {
+    //   loadBilling();
+    //   loadPaymentSummary();
+    // }, 500);
   };
 
   const handleEdit = (invoice) => {
@@ -138,19 +138,19 @@ const [appointments, setAppointments] = useState([]);
 
     removeBilling(billingId);
 
-    setTimeout(() => {
-      loadBilling();
-      loadPaymentSummary();
-    }, 500);
+    // setTimeout(() => {
+    //   loadBilling();
+    //   loadPaymentSummary();
+    // }, 500);
   };
 
   const handleStatusChange = (billingId, status) => {
     changePaymentStatus(billingId, status);
 
-    setTimeout(() => {
-      loadBilling();
-      loadPaymentSummary();
-    }, 500);
+    // setTimeout(() => {
+    //   loadBilling();
+    //   loadPaymentSummary();
+    // }, 500);
   };
 
   if (!canViewBilling) {

@@ -16,6 +16,7 @@ const emptyForm = {
   provider_id: "",
   appointment_id: "",
   notes: "",
+  status: "Pending",
   items: [{ ...emptyMedicine }]
 };
 
@@ -53,18 +54,19 @@ function PrescriptionPage() {
     loadPrescriptions();
   }, []);
 
-  const resetForm = () => {
-    setFormData({
-      patient_id: "",
-      provider_id: "",
-      appointment_id: "",
-      notes: "",
-      items: [{ ...emptyMedicine }]
-    });
+const resetForm = () => {
+  setFormData({
+    patient_id: "",
+    provider_id: "",
+    appointment_id: "",
+    notes: "",
+    status: "Pending",
+    items: [{ ...emptyMedicine }]
+  });
 
-    setEditingId(null);
-    setShowForm(false);
-  };
+  setEditingId(null);
+  setShowForm(false);
+};
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -126,6 +128,8 @@ function PrescriptionPage() {
         ? Number(formData.appointment_id)
         : null,
       notes: formData.notes,
+      status: editingId
+    ? formData.status : "Pending",
       items: formData.items.map((item) => ({
         medicine_id: Number(item.medicine_id),
         dosage: item.dosage,
@@ -143,9 +147,9 @@ function PrescriptionPage() {
 
     resetForm();
 
-    setTimeout(() => {
-      loadPrescriptions();
-    }, 500);
+    // setTimeout(() => {
+    //   loadPrescriptions();
+    // }, 500);
   };
 
   const handleEdit = (prescription) => {
@@ -188,9 +192,9 @@ function PrescriptionPage() {
     ) {
       removePrescription(id);
 
-      setTimeout(() => {
-        loadPrescriptions();
-      }, 500);
+      // setTimeout(() => {
+      //   loadPrescriptions();
+      // }, 500);
     }
   };
 
@@ -203,9 +207,9 @@ function PrescriptionPage() {
       status
     });
 
-    setTimeout(() => {
-      loadPrescriptions();
-    }, 500);
+    // setTimeout(() => {
+    //   loadPrescriptions();
+    // }, 500);
   };
 
   return (
