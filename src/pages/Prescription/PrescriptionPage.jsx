@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
+import { useTheme } from "styled-components";
 import { usePrescription } from "../../modules/prescription/hooks/usePrescription";
 import useAuth from "../../modules/auth/hooks/useAuth";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import usePatients from "../../modules/patients/hooks/usePatients";
+import useAppointments from "../../modules/appointments/hooks/useAppointments";
+import useMedicines from "../../modules/medicines/hooks/useMedicines";
 
 const emptyMedicine = {
   medicine_id: "",
+  medicine_name: "",
   dosage: "",
   frequency: "",
   duration: "",
@@ -32,7 +37,24 @@ function PrescriptionPage() {
     changePrescriptionStatus
   } = usePrescription();
 
+  const {
+  patients,
+  fetchPatients
+} = usePatients();
+
+const {
+  medicines,
+  loading: medicinesLoading,
+  error: medicinesError,
+  loadMedicines
+} = useMedicines();
+
   const { user } = useAuth();
+  const theme = useTheme();
+  const {
+  batches,
+  fetchAppointments
+} = useAppointments();
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -45,14 +67,17 @@ function PrescriptionPage() {
   const isProvider = userRoles.includes("Provider");
   const isPharmacist = userRoles.includes("Pharmacist");
 
-  const canCreate = isAdmin || isProvider;
-  const canEdit = isAdmin || isProvider;
-  const canDelete = isAdmin || isProvider;
-  const canChangeStatus = isAdmin || isPharmacist;
+const canCreate = isProvider;
+const canEdit = isProvider;
+const canDelete = isProvider;
+const canChangeStatus = isPharmacist;
 
-  useEffect(() => {
-    loadPrescriptions();
-  }, []);
+useEffect(() => {
+  loadPrescriptions();
+  fetchPatients();
+  fetchAppointments(1);
+  loadMedicines();
+}, []);
 
 const resetForm = () => {
   setFormData({
@@ -68,31 +93,62 @@ const resetForm = () => {
   setShowForm(false);
 };
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  const appointments = Object.values(batches || {})
+  .flat()
+  .filter(
+    (appointment) =>
+      String(appointment.patient_id) === String(formData.patient_id) &&
+      String(appointment.provider_id) === String(user?.id)
+  );
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+const handleChange = (event) => {
+  const { name, value } = event.target;
 
-  const handleMedicineChange = (index, event) => {
-    const { name, value } = event.target;
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+    ...(name === "patient_id"
+      ? { appointment_id: "" }
+      : {})
+  }));
+};
 
-    setFormData((prev) => ({
-      ...prev,
-      items: prev.items.map((item, itemIndex) =>
-        itemIndex === index
-          ? {
-              ...item,
-              [name]: value
-            }
-          : item
-      )
-    }));
-  };
+const handleMedicineSearch = (index, value) => {
+  const selectedMedicine = medicines.find(
+    (medicine) =>
+      `${medicine.name} (ID: ${medicine.id})` === value
+  );
 
+  setFormData((prev) => ({
+    ...prev,
+    items: prev.items.map((item, itemIndex) =>
+      itemIndex === index
+        ? {
+            ...item,
+            medicine_name: value,
+            medicine_id: selectedMedicine
+              ? selectedMedicine.id
+              : ""
+          }
+        : item
+    )
+  }));
+};
+const handleMedicineChange = (index, event) => {
+  const { name, value } = event.target;
+
+  setFormData((prev) => ({
+    ...prev,
+    items: prev.items.map((item, itemIndex) =>
+      itemIndex === index
+        ? {
+            ...item,
+            [name]: value
+          }
+        : item
+    )
+  }));
+};
   const addMedicine = () => {
     setFormData((prev) => ({
       ...prev,
@@ -123,7 +179,7 @@ const resetForm = () => {
 
     const data = {
       patient_id: Number(formData.patient_id),
-      provider_id: Number(formData.provider_id),
+      provider_id: Number(user.id),
       appointment_id: formData.appointment_id
         ? Number(formData.appointment_id)
         : null,
@@ -167,11 +223,23 @@ const resetForm = () => {
       items:
         prescription.items?.length > 0
           ? prescription.items.map((item) => ({
-              medicine_id: item.medicine_id || "",
-              dosage: item.dosage || "",
-              frequency: item.frequency || "",
-              duration: item.duration || "",
-              quantity: item.quantity || ""
+             medicine_id: item.medicine_id || "",
+medicine_name:
+  medicines.find(
+    (medicine) =>
+      String(medicine.id) ===
+      String(item.medicine_id)
+  )?.name
+    ? `${medicines.find(
+        (medicine) =>
+          String(medicine.id) ===
+          String(item.medicine_id)
+      ).name} (ID: ${item.medicine_id})`
+    : "",
+dosage: item.dosage || "",
+frequency: item.frequency || "",
+duration: item.duration || "",
+quantity: item.quantity || ""
             }))
           : [{ ...emptyMedicine }]
     });
@@ -214,7 +282,14 @@ const resetForm = () => {
 
   return (
     <DashboardLayout>
-      <div className="prescription-page">
+      <div
+  className="prescription-page"
+  style={{
+    "--primary-color": theme.colors.primary,
+    "--primary-hover": theme.colors.primaryHover,
+    "--primary-soft": `${theme.colors.primary}22`
+  }}
+>
         <style>{`
           .prescription-page {
             padding: 24px;
@@ -241,16 +316,20 @@ const resetForm = () => {
             font-size: 14px;
           }
 
-          .add-button {
-            border: none;
-            border-radius: 8px;
-            padding: 11px 18px;
-            background: #2563eb;
-            color: #ffffff;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
+        .add-button {
+           border: none;
+           border-radius: 8px;
+           padding: 11px 18px;
+           background: var(--primary-color);
+           color: #ffffff;
+           cursor: pointer;
+           font-size: 14px;
+           font-weight: 600;
           }
+           .add-button:hover,
+.save-button:hover {
+  background: var(--primary-hover);
+}
 
           .prescription-card {
             background: #ffffff;
@@ -305,10 +384,10 @@ const resetForm = () => {
             border-color: #2563eb;
           }
 
-          .form-textarea {
-            min-height: 90px;
-            resize: vertical;
-          }
+    .form-input:focus,
+.form-textarea:focus {
+  border-color: var(--primary-color);
+}
 
           .medicine-section {
             margin-top: 24px;
@@ -380,9 +459,9 @@ const resetForm = () => {
           }
 
           .save-button {
-            background: #2563eb;
-            color: #ffffff;
-          }
+  background: var(--primary-color);
+  color: #ffffff;
+}
 
           .cancel-button {
             background: #e5e7eb;
@@ -437,10 +516,10 @@ const resetForm = () => {
             font-weight: 600;
           }
 
-          .view-button {
-            background: #dbeafe;
-            color: #1d4ed8;
-          }
+       .view-button {
+  background: var(--primary-soft);
+  color: var(--primary-color);
+}
 
           .delete-button {
             background: #fee2e2;
@@ -572,22 +651,26 @@ const resetForm = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
-                <div className="form-group">
-                  <label className="form-label">
-                    Patient ID
-                  </label>
+<div className="form-group">
+  <label className="form-label">Patient</label>
+  <select
+    className="form-input"
+    name="patient_id"
+    value={formData.patient_id}
+    onChange={handleChange}
+    required
+  >
+    <option value="">Select Patient</option>
 
-                  <input
-                    className="form-input"
-                    type="number"
-                    name="patient_id"
-                    value={formData.patient_id}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
+    {patients.map((patient) => (
+      <option key={patient.id} value={patient.id}>
+        {patient.patient_name} (ID: {patient.id})
+      </option>
+    ))}
+  </select>
+</div>
 
-                <div className="form-group">
+                {/* <div className="form-group">
                   <label className="form-label">
                     Provider ID
                   </label>
@@ -600,20 +683,37 @@ const resetForm = () => {
                     onChange={handleChange}
                     required
                   />
-                </div>
+                </div> */}
 
                 <div className="form-group">
                   <label className="form-label">
                     Appointment ID
                   </label>
 
-                  <input
-                    className="form-input"
-                    type="number"
-                    name="appointment_id"
-                    value={formData.appointment_id}
-                    onChange={handleChange}
-                  />
+<select
+  className="form-input"
+  name="appointment_id"
+  value={formData.appointment_id}
+  onChange={handleChange}
+  disabled={!formData.patient_id}
+>
+  <option value="">
+    {formData.patient_id
+      ? "Select Appointment"
+      : "Select Patient First"}
+  </option>
+
+  {appointments.map((appointment) => (
+    <option
+      key={appointment.id}
+      value={appointment.id}
+    >
+      Appointment #{appointment.id} -{" "}
+      {appointment.appointment_date}{" "}
+      {appointment.appointment_time}
+    </option>
+  ))}
+</select>
                 </div>
 
                 <div className="form-group full-width">
@@ -653,24 +753,52 @@ const resetForm = () => {
                   >
                     <div className="medicine-grid">
                       <div className="form-group">
-                        <label className="form-label">
-                          Medicine ID
-                        </label>
+  <label className="form-label">
+    Medicine
+  </label>
 
-                        <input
-                          className="form-input"
-                          type="number"
-                          name="medicine_id"
-                          value={item.medicine_id}
-                          onChange={(event) =>
-                            handleMedicineChange(
-                              index,
-                              event
-                            )
-                          }
-                          required
-                        />
-                      </div>
+  <input
+    className="form-input"
+    type="text"
+    list={`medicine-list-${index}`}
+    value={item.medicine_name}
+    onChange={(event) =>
+      handleMedicineSearch(
+        index,
+        event.target.value
+      )
+    }
+    placeholder={
+      medicinesLoading
+        ? "Loading medicines..."
+        : "Search medicine..."
+    }
+    disabled={medicinesLoading}
+    required
+  />
+
+  <datalist id={`medicine-list-${index}`}>
+    {medicines.map((medicine) => (
+      <option
+        key={medicine.id}
+        value={`${medicine.name} (ID: ${medicine.id})`}
+      />
+    ))}
+  </datalist>
+
+  {item.medicine_id && (
+    <small
+      style={{
+        display: "block",
+        marginTop: "5px",
+        color: "#6b7280",
+        fontSize: "12px"
+      }}
+    >
+      Medicine ID: {item.medicine_id}
+    </small>
+  )}
+</div>
 
                       <div className="form-group">
                         <label className="form-label">

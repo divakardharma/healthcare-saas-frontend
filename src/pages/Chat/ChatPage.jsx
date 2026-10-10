@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
@@ -6,398 +6,113 @@ import { Loader, EmptyState } from "../../components/common";
 import useChat from "../../modules/chat/hooks/useChat";
 import useAuth from "../../modules/auth/hooks/useAuth";
 
-const PageWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+import "./ChatPage.css";
+
+/*
+ * The ONLY styled-component in this page.
+ * It turns the tenant theme into CSS variables; everything else
+ * (layout, spacing, responsive rules) lives in ChatPage.css and
+ * reads these variables, so tenant colours still apply.
+ */
+const ChatTheme = styled.div`
+  --chat-primary: ${({ theme }) => theme.colors.primary};
+  --chat-primary-hover: ${({ theme }) => theme.colors.primaryHover};
+  --chat-primary-soft: color-mix(
+    in srgb,
+    ${({ theme }) => theme.colors.primary} 12%,
+    transparent
+  );
+  --chat-on-primary: ${({ theme }) => theme.colors.surface};
+  --chat-surface: ${({ theme }) => theme.colors.surface};
+  --chat-background: ${({ theme }) => theme.colors.background};
+  --chat-border: ${({ theme }) => theme.colors.border};
+  --chat-input-border: ${({ theme }) => theme.colors.inputBorder};
+  --chat-hover: ${({ theme }) => theme.colors.disabled};
+  --chat-text: ${({ theme }) => theme.colors.textPrimary};
+  --chat-muted: ${({ theme }) => theme.colors.textSecondary};
+  --chat-danger: ${({ theme }) => theme.colors.danger};
+  --chat-radius: ${({ theme }) => theme.borderRadius.medium};
 `;
 
-const PageTitle = styled.h1`
-  margin: 0 0 12px;
-  font-size: 22px;
-  flex: none;
-  color: ${({ theme }) => theme.colors.textPrimary};
+/* ---------- helpers ---------- */
 
-  @media (max-width: 768px) {
-    font-size: 18px;
-    margin-bottom: 10px;
-  }
-`;
+const CHAT_ROLES = ["Admin", "Provider", "Nurse"];
 
-const ChatShell = styled.div`
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  background: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  overflow: hidden;
-`;
+function getInitials(name = "") {
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
 
-const UserList = styled.aside`
-  width: 280px;
-  flex: none;
-  border-right: 1px solid ${({ theme }) => theme.colors.border};
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: ${({ theme }) => theme.colors.surface};
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2);
 
-  @media (max-width: 768px) {
-    width: ${({ $hasSelection }) => ($hasSelection ? "0" : "100%")};
-    border-right: none;
-    overflow: hidden;
-  }
-`;
+  return parts[0][0] + parts[parts.length - 1][0];
+}
 
-const UserListHeader = styled.div`
-  padding: 16px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  font-weight: 600;
-  font-size: 16px;
-  flex: none;
-  color: ${({ theme }) => theme.colors.textPrimary};
+function dayKey(value) {
+  const d = new Date(value);
 
-  @media (max-width: 768px) {
-    padding: 12px;
-    font-size: 15px;
-  }
-`;
+  return Number.isNaN(d.getTime()) ? "" : d.toDateString();
+}
 
-const UserListBody = styled.div`
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-`;
+function formatDayLabel(value) {
+  const d = new Date(value);
 
-const UserItem = styled.button`
-  width: 100%;
-  text-align: left;
-  border: none;
-  background: ${({ $active, theme }) =>
-    $active ? theme.colors.disabled : "transparent"};
-  padding: 12px 16px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  if (Number.isNaN(d.getTime())) return "";
 
-  &:hover {
-    background: ${({ theme }) => theme.colors.disabled};
-  }
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
 
-  @media (max-width: 768px) {
-    padding: 10px 12px;
-  }
-`;
+  if (d.toDateString() === today.toDateString()) return "Today";
+  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
 
-const UserName = styled.span`
-  font-weight: 600;
-  font-size: 14px;
-  color: ${({ theme }) => theme.colors.textPrimary};
-`;
+  return d.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
-const UserRoles = styled.span`
-  font-size: 12px;
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
-
-const Conversation = styled.section`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-
-  @media (max-width: 768px) {
-    display: ${({ $hasSelection }) => ($hasSelection ? "flex" : "none")};
-  }
-`;
-
-const ConversationHeader = styled.div`
-  padding: 14px 16px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 600;
-  flex: none;
-  color: ${({ theme }) => theme.colors.textPrimary};
-
-  @media (max-width: 768px) {
-    padding: 12px;
-  }
-`;
-
-const BackButton = styled.button`
-  display: none;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 18px;
-  color: ${({ theme }) => theme.colors.primary};
-  padding: 0 4px;
-
-  @media (max-width: 768px) {
-    display: inline-flex;
-  }
-`;
-
-const MessagesArea = styled.div`
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 16px;
-  background: ${({ theme }) => theme.colors.background};
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  -webkit-overflow-scrolling: touch;
-
-  @media (max-width: 768px) {
-    padding: 12px;
-  }
-`;
-
-const BubbleRow = styled.div`
-  display: flex;
-  justify-content: ${({ $mine }) => ($mine ? "flex-end" : "flex-start")};
-  align-items: center;
-  gap: 4px;
-`;
-
-const BubbleWrapper = styled.div`
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  max-width: 75%;
-
-  @media (max-width: 768px) {
-    max-width: 85%;
-  }
-`;
-
-const Bubble = styled.div`
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: ${({ $mine, theme }) =>
-    $mine ? theme.colors.primary : theme.colors.surface};
-  color: ${({ $mine, theme }) =>
-    $mine ? theme.colors.surface : theme.colors.textPrimary};
-  border: ${({ $mine, theme }) =>
-    $mine ? "none" : `1px solid ${theme.colors.border}`};
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  word-break: break-word;
-
-  ${({ $deleted }) =>
-    $deleted &&
-    `
-    opacity: 0.7;
-    font-style: italic;
-  `}
-`;
-
-const BubbleMeta = styled.div`
-  font-size: 11px;
-  margin-top: 4px;
-  opacity: 0.8;
-  text-align: ${({ $mine }) => ($mine ? "right" : "left")};
-`;
-
-const ThreeDotsBtn = styled.button`
-  position: absolute;
-  ${({ $mine }) => ($mine ? "left: -30px;" : "right: -30px;")}
-  top: 50%;
-  transform: translateY(-50%);
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: none;
-  background: white;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  z-index: 2;
-  font-size: 16px;
-  color: #6b7280;
-  padding: 0;
-
-  ${BubbleWrapper}:hover & {
-    opacity: 1;
-  }
-
-  &:hover {
-    background: #f3f4f6;
-  }
-
-  @media (max-width: 768px) {
-    ${({ $mine }) => ($mine ? "left: -26px;" : "right: -26px;")}
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
-    opacity: 1;
-  }
-`;
-
-const Composer = styled.form`
-  display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ theme }) => theme.colors.surface};
-  flex: none;
-
-  @media (max-width: 768px) {
-    padding: 10px 12px;
-  }
-`;
-
-const ComposerInput = styled.input`
-  flex: 1;
-  border: 1px solid ${({ theme }) => theme.colors.inputBorder};
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  padding: 10px 12px;
-  font-size: 14px;
-  outline: none;
-
-  &:focus {
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-`;
-
-const SendButton = styled.button`
-  border: none;
-  background: ${({ theme }) => theme.colors.primary};
-  color: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.borderRadius.small};
-  padding: 0 18px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.primaryHover};
-  }
-
-  @media (max-width: 768px) {
-    padding: 0 14px;
-  }
-`;
-
-const Placeholder = styled.div`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ theme }) => theme.colors.textSecondary};
-  background: ${({ theme }) => theme.colors.background};
-`;
-
-const ErrorBanner = styled.div`
-  padding: 8px 16px;
-  background: #fef2f2;
-  color: ${({ theme }) => theme.colors.danger};
-  font-size: 13px;
-  flex: none;
-`;
-
-/* ===== Delete Menu ===== */
-const DeleteMenuOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const DeleteMenu = styled.div`
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
-  width: 260px;
-  overflow: hidden;
-
-  @media (max-width: 768px) {
-    width: 90%;
-    max-width: 280px;
-  }
-`;
-
-const DeleteMenuHeader = styled.div`
-  padding: 14px 16px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-`;
-
-const DeleteMenuItem = styled.button`
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 13px 16px;
-  border: none;
-  background: transparent;
-  font-size: 15px;
-  cursor: pointer;
-  color: ${({ $danger, $orange }) =>
-    $danger ? "#ef4444" : $orange ? "#f97316" : "#374151"};
-
-  &:hover {
-    background: #f9fafb;
-  }
-`;
-
-const DeleteMenuCancel = styled.button`
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 13px 16px;
-  border: none;
-  border-top: 1px solid #f3f4f6;
-  background: transparent;
-  font-size: 15px;
-  cursor: pointer;
-  color: #6b7280;
-
-  &:hover {
-    background: #f9fafb;
-  }
-`;
-
-function formatTime(value) {
+function formatClock(value) {
   if (!value) return "";
 
-  try {
-    const d = new Date(value);
+  const d = new Date(value);
 
-    return d.toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return value;
-  }
+  if (Number.isNaN(d.getTime())) return "";
+
+  return d.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
+
+function Avatar({ name, small = false }) {
+  return (
+    <span className={`chat-avatar${small ? " chat-avatar--sm" : ""}`}>
+      {getInitials(name)}
+    </span>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M22 2 11 13" />
+      <path d="M22 2 15 22l-4-9-9-4 20-7z" />
+    </svg>
+  );
+}
+
+/* ---------- page ---------- */
 
 function ChatPage() {
   const { user } = useAuth();
@@ -419,36 +134,61 @@ function ChatPage() {
     deleteMessage,
   } = useChat();
 
-  // Only Admin, Provider, and Nurse can appear in Staff Chat.
-  const chatUsers = users
-    .filter((u) => myId == null || Number(u.id) !== Number(myId))
-    .filter(
-      (u) =>
-        Array.isArray(u.roles) &&
-        u.roles.some((role) =>
-          ["Admin", "Provider", "Nurse"].includes(role)
-        )
-    );
-
   const [text, setText] = useState("");
+  const [search, setSearch] = useState("");
   const [menuMessage, setMenuMessage] = useState(null);
+
   const bottomRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Only Admin, Provider, and Nurse can appear in Staff Chat.
+  const chatUsers = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return users
+      .filter((u) => myId == null || Number(u.id) !== Number(myId))
+      .filter(
+        (u) =>
+          Array.isArray(u.roles) &&
+          u.roles.some((role) => CHAT_ROLES.includes(role))
+      )
+      .filter(
+        (u) =>
+          !query ||
+          String(u.name || "").toLowerCase().includes(query)
+      );
+  }, [users, myId, search]);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
 
-  const handleSelect = (id) => {
-    selectUser(id);
-  };
+  // Focus the composer when a conversation opens (desktop only).
+  useEffect(() => {
+    if (selectedUserId && window.matchMedia("(min-width: 769px)").matches) {
+      inputRef.current?.focus();
+    }
+  }, [selectedUserId]);
 
-  const handleBack = () => {
-    selectUser(null);
-  };
+  // Close the delete menu with Escape.
+  useEffect(() => {
+    if (!menuMessage) return undefined;
+
+    const onKey = (e) => {
+      if (e.key === "Escape") setMenuMessage(null);
+    };
+
+    window.addEventListener("keydown", onKey);
+
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuMessage]);
+
+  const isMyMessage = (message) =>
+    myId != null && Number(message.sender_user_id) === Number(myId);
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -466,252 +206,264 @@ function ChatPage() {
     setMenuMessage(message);
   };
 
-  const closeDeleteMenu = () => {
-    setMenuMessage(null);
-  };
+  const closeDeleteMenu = () => setMenuMessage(null);
 
   const handleDelete = (deleteType) => {
     if (!menuMessage) return;
 
-    deleteMessage(
-      menuMessage.id,
-      deleteType,
-      selectedUserId
-    );
-
+    deleteMessage(menuMessage.id, deleteType, selectedUserId);
     closeDeleteMenu();
   };
 
-  const isMyMessage = (message) => {
-    return (
-      myId != null &&
-      Number(message.sender_user_id) === Number(myId)
-    );
+  const hasSelection = Boolean(selectedUserId);
+  const selectedName = selectedUser?.name || `User #${selectedUserId}`;
+
+  const renderMessages = () => {
+    let previous = null;
+
+    return messages.map((m) => {
+      const mine = isMyMessage(m);
+      const isDeleted = Boolean(m.is_deleted);
+      const sameDay = previous && dayKey(previous.created_at) === dayKey(m.created_at);
+      const grouped =
+        sameDay && Number(previous.sender_user_id) === Number(m.sender_user_id);
+
+      const showDay = !sameDay;
+
+      previous = m;
+
+      return (
+        <div key={m.id} style={{ display: "contents" }}>
+          {showDay && (
+            <div className="chat-day">{formatDayLabel(m.created_at)}</div>
+          )}
+
+          <div
+            className={
+              "chat-row" +
+              (mine ? " chat-row--mine" : "") +
+              (grouped ? " chat-row--grouped" : "")
+            }
+          >
+            <div className="chat-bubble-wrap">
+              <div
+                className={
+                  "chat-bubble" + (isDeleted ? " chat-bubble--deleted" : "")
+                }
+              >
+                <div>{isDeleted ? "This message was deleted" : m.message}</div>
+                <div className="chat-bubble__time">
+                  {formatClock(m.created_at)}
+                </div>
+              </div>
+
+              {!isDeleted && (
+                <button
+                  type="button"
+                  className="chat-more"
+                  onClick={(e) => openDeleteMenu(m, e)}
+                  title="More options"
+                  aria-label="More options"
+                >
+                  ⋮
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    });
   };
 
   return (
     <DashboardLayout noPadding>
-      <PageWrapper>
-        <PageTitle>Chat</PageTitle>
+      <ChatTheme
+        className={`chat-page${hasSelection ? " chat-page--selected" : ""}`}
+      >
+        <h1 className="chat-title">Chat</h1>
 
-        <ChatShell>
-          <UserList $hasSelection={!!selectedUserId}>
-            <UserListHeader>Staff</UserListHeader>
+        <div className={`chat-shell${hasSelection ? " chat-shell--selected" : ""}`}>
+          {/* ===== Staff list ===== */}
+          <aside className="chat-sidebar">
+            <div className="chat-sidebar__header">
+              <h2 className="chat-sidebar__title">Staff</h2>
 
-            <UserListBody>
+              <input
+                type="search"
+                className="chat-search"
+                placeholder="Search staff…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search staff"
+              />
+            </div>
+
+            <div className="chat-sidebar__body">
               {loadingUsers && (
-                <div style={{ padding: 24 }}>
+                <div className="chat-sidebar__state">
                   <Loader />
                 </div>
               )}
 
               {!loadingUsers && chatUsers.length === 0 && (
-                <div style={{ padding: 16 }}>
-                  <EmptyState message="No staff available to chat" />
+                <div className="chat-sidebar__state">
+                  <EmptyState
+                    message={
+                      search
+                        ? "No staff match your search"
+                        : "No staff available to chat"
+                    }
+                  />
                 </div>
               )}
 
               {!loadingUsers &&
                 chatUsers.map((u) => (
-                  <UserItem
+                  <button
                     key={u.id}
                     type="button"
-                    $active={selectedUserId === u.id}
-                    onClick={() => handleSelect(u.id)}
+                    className={
+                      "chat-user" +
+                      (selectedUserId === u.id ? " chat-user--active" : "")
+                    }
+                    onClick={() => selectUser(u.id)}
                   >
-                    <UserName>
-                      {u.name || `User #${u.id}`}
-                    </UserName>
+                    <Avatar name={u.name || `U${u.id}`} />
 
-                    <UserRoles>
-                      {Array.isArray(u.roles) && u.roles.length
-                        ? u.roles.join(", ")
-                        : "Staff"}
-                    </UserRoles>
-                  </UserItem>
+                    <span className="chat-user__info">
+                      <span className="chat-user__name">
+                        {u.name || `User #${u.id}`}
+                      </span>
+
+                      <span className="chat-user__roles">
+                        {Array.isArray(u.roles) && u.roles.length
+                          ? u.roles.join(", ")
+                          : "Staff"}
+                      </span>
+                    </span>
+                  </button>
                 ))}
-            </UserListBody>
-          </UserList>
+            </div>
+          </aside>
 
-          <Conversation $hasSelection={!!selectedUserId}>
-            {!selectedUserId ? (
-              <Placeholder>
-                Select a staff member to start chatting
-              </Placeholder>
+          {/* ===== Conversation ===== */}
+          <section className="chat-conversation">
+            {!hasSelection ? (
+              <div className="chat-placeholder">
+                <div className="chat-placeholder__icon">💬</div>
+                <strong>Your messages</strong>
+                <span>Select a staff member to start chatting</span>
+              </div>
             ) : (
               <>
-                <ConversationHeader>
-                  <BackButton
+                <header className="chat-conversation__header">
+                  <button
                     type="button"
-                    onClick={handleBack}
-                    aria-label="Back"
+                    className="chat-back"
+                    onClick={() => selectUser(null)}
+                    aria-label="Back to staff list"
                   >
                     ←
-                  </BackButton>
+                  </button>
+
+                  <Avatar name={selectedName} small />
 
                   <div>
-                    <div>
-                      {selectedUser?.name ||
-                        `User #${selectedUserId}`}
+                    <div className="chat-conversation__name">
+                      {selectedName}
                     </div>
 
                     {selectedUser?.roles?.length > 0 && (
-                      <div
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 400,
-                          color: "#6b7280",
-                        }}
-                      >
+                      <div className="chat-conversation__roles">
                         {selectedUser.roles.join(", ")}
                       </div>
                     )}
                   </div>
-                </ConversationHeader>
+                </header>
 
                 {(error || sendError) && (
-                  <ErrorBanner>
-                    {error || sendError}
-                  </ErrorBanner>
+                  <div className="chat-error">{error || sendError}</div>
                 )}
 
-                <MessagesArea>
+                <div className="chat-messages">
                   {loadingMessages && <Loader />}
 
-                  {!loadingMessages &&
-                    messages.length === 0 && (
-                      <Placeholder
-                        style={{
-                          background: "transparent",
-                        }}
-                      >
-                        No messages yet. Say hello.
-                      </Placeholder>
-                    )}
+                  {!loadingMessages && messages.length === 0 && (
+                    <div className="chat-placeholder" style={{ background: "transparent" }}>
+                      <div className="chat-placeholder__icon">👋</div>
+                      <span>No messages yet. Say hello.</span>
+                    </div>
+                  )}
 
-                  {!loadingMessages &&
-                    messages.map((m) => {
-                      const mine = isMyMessage(m);
-                      const isDeleted = m.is_deleted;
-
-                      return (
-                        <BubbleRow
-                          key={m.id}
-                          $mine={mine}
-                        >
-                          <BubbleWrapper>
-                            <Bubble
-                              $mine={mine}
-                              $deleted={isDeleted}
-                            >
-                              <div>
-                                {isDeleted
-                                  ? "This message was deleted"
-                                  : m.message}
-                              </div>
-
-                              <BubbleMeta $mine={mine}>
-                                {!mine && m.sender_name
-                                  ? `${m.sender_name} · `
-                                  : ""}
-
-                                {formatTime(
-                                  m.created_at
-                                )}
-                              </BubbleMeta>
-                            </Bubble>
-
-                            {!isDeleted && (
-                              <ThreeDotsBtn
-                                type="button"
-                                $mine={mine}
-                                onClick={(e) =>
-                                  openDeleteMenu(m, e)
-                                }
-                                title="More options"
-                              >
-                                ⋮
-                              </ThreeDotsBtn>
-                            )}
-                          </BubbleWrapper>
-                        </BubbleRow>
-                      );
-                    })}
+                  {!loadingMessages && renderMessages()}
 
                   <div ref={bottomRef} />
-                </MessagesArea>
+                </div>
 
-                <Composer onSubmit={handleSend}>
-                  <ComposerInput
+                <form className="chat-composer" onSubmit={handleSend}>
+                  <input
+                    ref={inputRef}
                     type="text"
+                    className="chat-composer__input"
                     placeholder="Type a message…"
                     value={text}
-                    onChange={(e) =>
-                      setText(e.target.value)
-                    }
+                    onChange={(e) => setText(e.target.value)}
                     disabled={sending}
                     autoComplete="off"
                   />
 
-                  <SendButton
+                  <button
                     type="submit"
-                    disabled={
-                      sending || !text.trim()
-                    }
+                    className="chat-send"
+                    disabled={sending || !text.trim()}
+                    aria-label="Send message"
                   >
-                    {sending ? "…" : "Send"}
-                  </SendButton>
-                </Composer>
+                    <SendIcon />
+                  </button>
+                </form>
               </>
             )}
-          </Conversation>
-        </ChatShell>
-      </PageWrapper>
+          </section>
+        </div>
 
-      {menuMessage && (
-        <DeleteMenuOverlay
-          onClick={closeDeleteMenu}
-        >
-          <DeleteMenu
-            onClick={(e) =>
-              e.stopPropagation()
-            }
-          >
-            <DeleteMenuHeader>
-              Delete Message
-            </DeleteMenuHeader>
+        {/* ===== Delete menu ===== */}
+        {menuMessage && (
+          <div className="chat-overlay" onClick={closeDeleteMenu}>
+            <div className="chat-menu" onClick={(e) => e.stopPropagation()}>
+              <div className="chat-menu__header">Delete Message</div>
 
-            <DeleteMenuItem
-              $orange
-              onClick={() =>
-                handleDelete("me")
-              }
-            >
-              <span>🚫</span>
-              Delete for me
-            </DeleteMenuItem>
-
-            {isMyMessage(menuMessage) && (
-              <DeleteMenuItem
-                $danger
-                onClick={() =>
-                  handleDelete("everyone")
-                }
+              <button
+                type="button"
+                className="chat-menu__item chat-menu__item--warn"
+                onClick={() => handleDelete("me")}
               >
-                <span>🗑️</span>
-                Delete for everyone
-              </DeleteMenuItem>
-            )}
+                <span>🚫</span>
+                Delete for me
+              </button>
 
-            <DeleteMenuCancel
-              onClick={closeDeleteMenu}
-            >
-              <span>✕</span>
-              Cancel
-            </DeleteMenuCancel>
-          </DeleteMenu>
-        </DeleteMenuOverlay>
-      )}
+              {isMyMessage(menuMessage) && (
+                <button
+                  type="button"
+                  className="chat-menu__item chat-menu__item--danger"
+                  onClick={() => handleDelete("everyone")}
+                >
+                  <span>🗑️</span>
+                  Delete for everyone
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="chat-menu__item chat-menu__item--cancel"
+                onClick={closeDeleteMenu}
+              >
+                <span>✕</span>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </ChatTheme>
     </DashboardLayout>
   );
 }

@@ -1,0 +1,278 @@
+/* ===== User Management page ===== */
+
+.um-page {
+  width: 100%;
+}
+
+/* ---------- Buttons ---------- */
+
+.um-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.um-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.um-btn-primary {
+  background: var(--color-primary, #2563eb);
+  color: #fff;
+}
+
+.um-btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover, #1d4ed8);
+}
+
+.um-btn-secondary {
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #111827);
+  border-color: var(--color-input-border, #d1d5db);
+}
+
+.um-btn-secondary:hover:not(:disabled) {
+  background: var(--color-disabled, #f3f4f6);
+}
+
+.um-back {
+  margin-top: 18px;
+}
+
+/* ---------- Error ---------- */
+
+.um-error {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: var(--color-danger, #dc2626);
+  font-size: 14px;
+}
+
+/* ---------- Table ---------- */
+
+.um-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.um-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.um-table th,
+.um-table td {
+  padding: 12px 16px;
+  font-size: 14px;
+  text-align: left;
+  vertical-align: middle;
+  color: var(--color-text, #111827);
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.um-table th {
+  font-weight: 600;
+  background: var(--color-disabled, #f3f4f6);
+}
+
+.um-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.um-email {
+  word-break: break-word;
+}
+
+.um-col-actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.um-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+/* ---------- Roles ---------- */
+
+.um-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.um-role-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary, #2563eb) 12%, var(--color-surface, #fff));
+  color: var(--color-primary, #2563eb);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ---------- Row actions ---------- */
+
+.um-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.um-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--color-input-border, #d1d5db);
+  border-radius: 6px;
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #111827);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.um-icon-btn:hover {
+  background: var(--color-disabled, #f3f4f6);
+  color: var(--color-primary, #2563eb);
+}
+
+.um-icon-btn-danger:hover {
+  background: #fef2f2;
+  color: var(--color-danger, #dc2626);
+  border-color: #fecaca;
+}
+
+/* ---------- Modal form ---------- */
+
+.um-form {
+  display: grid;
+  gap: 16px;
+}
+
+.um-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.um-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text, #111827);
+}
+
+.um-field select {
+  padding: 10px 12px;
+  border: 1px solid var(--color-input-border, #d1d5db);
+  border-radius: 6px;
+  background: var(--color-surface, #fff);
+  font-size: 14px;
+  outline: none;
+}
+
+.um-field select:focus {
+  border-color: var(--color-primary, #2563eb);
+}
+
+.um-field select:disabled {
+  background: var(--color-disabled, #f3f4f6);
+  cursor: not-allowed;
+}
+
+.um-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ---------- Tablet / mobile ---------- */
+
+@media (max-width: 768px) {
+  /* table rows become cards */
+  .um-table thead {
+    display: none;
+  }
+
+  .um-table,
+  .um-table tbody,
+  .um-table tr,
+  .um-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .um-table tr {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 8px;
+  }
+
+  .um-table tbody tr:hover {
+    background: transparent;
+  }
+
+  .um-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 14px;
+    border-bottom: none;
+    text-align: right;
+  }
+
+  .um-table td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-weight: 600;
+    color: var(--color-text-secondary, #6b7280);
+    text-align: left;
+  }
+
+  .um-roles {
+    justify-content: flex-end;
+  }
+
+  .um-empty {
+    display: block;
+    text-align: center;
+  }
+
+  .um-empty::before {
+    content: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .um-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .um-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .um-form-actions .um-btn,
+  .um-back {
+    width: 100%;
+  }
+}

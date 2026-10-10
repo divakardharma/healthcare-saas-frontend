@@ -39,7 +39,6 @@ useEffect(() => {
 
   if (subdomain) {
     dispatch(setTenant(subdomain));
-    dispatch(fetchTenantRequest());
   }
 }, [dispatch]);
 
@@ -51,6 +50,12 @@ useEffect(() => {
   }
 
   authInitializationStarted = true;
+
+  const loadTenantConfig = () => {
+    if (getTenantFromDomain()) {
+      dispatch(fetchTenantRequest());
+    }
+  };
 
   const initializeAuth = async () => {
     try {
@@ -65,6 +70,12 @@ useEffect(() => {
 
       tokenService.setCsrfToken(csrfToken);
 
+      // Tenant config must be requested only AFTER the CSRF request has
+      // finished. If both start together on a fresh browser, each request
+      // creates its own PHP session and the browser may keep the wrong
+      // session cookie -> "CSRF failed" on the first login.
+      loadTenantConfig();
+
       // 4. Restore login only on protected/application pages
       const publicPaths = ["/login", "/register"];
       const currentPath = window.location.pathname;
@@ -76,6 +87,7 @@ useEffect(() => {
       }
     } catch (error) {
       console.error("Auth initialization failed:", error);
+      loadTenantConfig();
       dispatch(authInitializationFailed());
     }
   };

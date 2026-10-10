@@ -1,0 +1,424 @@
+/* =========================================================
+   BillingPage.css
+   Layout, spacing and responsive rules.
+   Colours come from CSS variables set by BillingTheme
+   (the only styled-component in BillingPage.jsx).
+   ========================================================= */
+
+.billing-page {
+  width: 100%;
+  min-width: 0;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px;
+  color: var(--bill-text);
+}
+
+/* ---------- Header ---------- */
+.billing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.billing-header h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.billing-header p {
+  margin: 6px 0 0;
+  color: var(--bill-muted);
+  font-size: 14px;
+}
+
+/* ---------- Buttons ---------- */
+.billing-btn {
+  padding: 9px 16px;
+  border: none;
+  border-radius: var(--bill-radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.billing-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.billing-btn--primary {
+  background: var(--bill-primary);
+  color: var(--bill-on-primary);
+}
+
+.billing-btn--primary:hover:not(:disabled) {
+  background: var(--bill-primary-hover);
+}
+
+.billing-btn--secondary,
+.billing-btn--edit {
+  background: var(--bill-hover);
+  color: var(--bill-text);
+}
+
+.billing-btn--secondary:hover,
+.billing-btn--edit:hover {
+  background: var(--bill-border);
+}
+
+.billing-btn--delete {
+  background: color-mix(in srgb, var(--bill-danger) 12%, transparent);
+  color: var(--bill-danger);
+}
+
+.billing-btn--delete:hover {
+  background: color-mix(in srgb, var(--bill-danger) 22%, transparent);
+}
+
+.billing-btn--small {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+/* ---------- Summary cards ---------- */
+.billing-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.billing-card {
+  padding: 20px;
+  background: var(--bill-surface);
+  border: 1px solid var(--bill-border);
+  border-top: 3px solid var(--bill-border);
+  border-radius: 12px;
+  box-shadow: var(--bill-shadow);
+}
+
+.billing-card--primary {
+  border-top-color: var(--bill-primary);
+}
+
+.billing-card--success {
+  border-top-color: var(--bill-success);
+}
+
+.billing-card--warning {
+  border-top-color: #f59e0b;
+}
+
+.billing-card__label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--bill-muted);
+  font-size: 14px;
+}
+
+.billing-card__value {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* ---------- Form card ---------- */
+.billing-form-card,
+.billing-table-card {
+  margin-bottom: 24px;
+  background: var(--bill-surface);
+  border: 1px solid var(--bill-border);
+  border-radius: 12px;
+  box-shadow: var(--bill-shadow);
+}
+
+.billing-form-card {
+  padding: 20px;
+}
+
+.billing-form-header,
+.billing-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.billing-form-header h3,
+.billing-table-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.billing-close-button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--bill-muted);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.billing-close-button:hover {
+  background: var(--bill-hover);
+}
+
+.billing-form-grid {
+  display: grid;
+  /* minmax(0, 1fr) = columns can never grow because of long option text */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.billing-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.billing-field label {
+  color: var(--bill-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.billing-input {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 42px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 12px;
+  border: 1px solid var(--bill-input-border);
+  border-radius: var(--bill-radius);
+  background: var(--bill-surface);
+  color: var(--bill-text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.billing-input:focus {
+  border-color: var(--bill-primary);
+  box-shadow: 0 0 0 3px var(--bill-primary-soft);
+}
+
+.billing-input:disabled {
+  background: var(--bill-hover);
+  color: var(--bill-muted);
+  cursor: not-allowed;
+}
+
+.billing-field-hint {
+  min-height: 2.6em; /* reserve space so the form height never jumps */
+  color: var(--bill-muted);
+  font-size: 12px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.billing-field-hint--selected {
+  color: var(--bill-text);
+}
+
+.billing-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ---------- Table ---------- */
+.billing-table-header {
+  margin-bottom: 0;
+  padding: 20px 20px 16px;
+}
+
+.billing-table-wrapper {
+  overflow-x: auto;
+}
+
+.billing-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.billing-table th,
+.billing-table td {
+  padding: 14px 20px;
+  border-top: 1px solid var(--bill-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.billing-table th {
+  background: var(--bill-background);
+  color: var(--bill-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.billing-table tbody tr:hover {
+  background: var(--bill-background);
+}
+
+.billing-sub {
+  display: block;
+  color: var(--bill-muted);
+  font-size: 12px;
+}
+
+.billing-amount {
+  font-weight: 600;
+}
+
+/* ---------- Status ---------- */
+.billing-status {
+  display: inline-block;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+select.billing-status {
+  cursor: pointer;
+}
+
+.billing-status--pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.billing-status--paid {
+  background: color-mix(in srgb, var(--bill-success) 16%, transparent);
+  color: var(--bill-success);
+}
+
+.billing-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------- Messages ---------- */
+.billing-empty {
+  padding: 40px;
+  color: var(--bill-muted);
+  text-align: center;
+}
+
+.billing-error {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border-radius: var(--bill-radius);
+  background: color-mix(in srgb, var(--bill-danger) 10%, transparent);
+  color: var(--bill-danger);
+}
+
+.billing-denied {
+  padding: 24px;
+  color: var(--bill-text);
+}
+
+/* ---------- Tablet ---------- */
+@media (max-width: 900px) {
+  .billing-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .billing-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Mobile: table rows become cards ---------- */
+@media (max-width: 700px) {
+  .billing-table thead {
+    display: none;
+  }
+
+  .billing-table,
+  .billing-table tbody,
+  .billing-table tr,
+  .billing-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .billing-table tr {
+    padding: 12px 16px;
+    border-top: 1px solid var(--bill-border);
+  }
+
+  .billing-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border: none;
+    text-align: right;
+    white-space: normal;
+  }
+
+  .billing-table td::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--bill-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .billing-table tbody tr:hover {
+    background: transparent;
+  }
+
+  .billing-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 600px) {
+  .billing-page {
+    padding: 16px;
+  }
+
+  .billing-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .billing-header h2 {
+    font-size: 24px;
+  }
+
+  .billing-summary {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .billing-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .billing-form-actions .billing-btn {
+    width: 100%;
+  }
+}

@@ -1,126 +1,103 @@
-import styled from "styled-components";
+
 import { useSelector } from "react-redux";
+import { Menu, Wifi, WifiOff, RefreshCw, UserRound } from "lucide-react";
+import styled from "styled-components";
+
 import useAuth from "../../modules/auth/hooks/useAuth";
 import useTenant from "../../modules/tenant/hooks/useTenant";
+import "./Header.css";
 
-const HeaderContainer = styled.header`
-  height: 70px;
-  background: ${({ theme }) => theme.colors.surface};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 0 24px;
-  box-sizing: border-box;
-`;
-
-const HeaderLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const HeaderTitleSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-`;
-
-const HeaderTitle = styled.h2`
-  margin: 0;
-  font-size: 20px;
-  color: ${({ theme }) => theme.colors.textPrimary};
-`;
-
-const TenantName = styled.span`
-  font-size: 13px;
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
-
-const HeaderRight = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-`;
-
-const HeaderUser = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
-
+// Styled-components: dynamic online/offline status mattum
 const OfflineBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${({ $isOnline, theme }) =>
-    $isOnline ? theme.colors.primary + "22" : "#f59e0b22"};
-  color: ${({ $isOnline }) => ($isOnline ? "#059669" : "#d97706")};
-  border: 1px solid
-    ${({ $isOnline }) => ($isOnline ? "#05966955" : "#d9770655")};
-`;
+  background: ${({ $isOnline }) =>
+    $isOnline ? "#16a34a12" : "#d9770612"};
 
-const MenuButton = styled.button`
-  display: none;
-  border: none;
-  background: transparent;
-  font-size: 24px;
-  cursor: pointer;
-  color: ${({ theme }) => theme.colors.textPrimary};
+  color: ${({ $isOnline }) =>
+    $isOnline ? "#15803d" : "#b45309"};
 
-  @media (max-width: 768px) {
-    display: inline-block;
-  }
+  border-color: ${({ $isOnline }) =>
+    $isOnline ? "#16a34a40" : "#d9770640"};
 `;
 
 function Header({ onMenuClick }) {
   const { user } = useAuth();
   const { tenant } = useTenant();
-  const { isOnline, offlineQueue, isProcessingQueue } = useSelector(
-    (state) => state.offline
-  );
+
+  const {
+    isOnline,
+    offlineQueue,
+    isProcessingQueue,
+  } = useSelector((state) => state.offline);
 
   const queueCount = offlineQueue?.length || 0;
+  const displayName = user?.name || user?.email || "User";
+  const tenantName =
+    tenant?.name || tenant?.subdomain || "Tenant";
 
   return (
-    <HeaderContainer>
-      <HeaderLeft>
-        <MenuButton onClick={onMenuClick} aria-label="Toggle menu">
-          ☰
-        </MenuButton>
+    <header className="app-header">
+      <div className="header-left">
+        <button
+          type="button"
+          className="header-menu-button"
+          onClick={onMenuClick}
+          aria-label="Toggle navigation menu"
+        >
+          <Menu size={21} />
+        </button>
 
-        <HeaderTitleSection>
-          <HeaderTitle>Healthcare SaaS</HeaderTitle>
+        <div className="header-title-section">
+          <h2 className="header-title">Healthcare SaaS</h2>
+          <span className="tenant-name" title={tenantName}>
+            {tenantName}
+          </span>
+        </div>
+      </div>
 
-          <TenantName>
-            {tenant?.name || tenant?.subdomain || "Tenant"}
-          </TenantName>
-        </HeaderTitleSection>
-      </HeaderLeft>
+      <div className="header-right">
+        <OfflineBadge
+          className="offline-badge"
+          $isOnline={isOnline}
+          role="status"
+          aria-live="polite"
+        >
+          {isOnline ? (
+            <Wifi className="status-icon" />
+          ) : (
+            <WifiOff className="status-icon" />
+          )}
 
-      <HeaderRight>
-        <OfflineBadge $isOnline={isOnline}>
-          {isOnline ? "Online" : "Offline"}
+          <span>{isOnline ? "Online" : "Offline"}</span>
+
           {queueCount > 0 && (
-            <>
-              {" · "}
-              Queue: {queueCount}
-              {isProcessingQueue ? " (syncing…)" : ""}
-            </>
+            <span className="queue-info">
+              {isProcessingQueue ? (
+                <RefreshCw className="queue-icon queue-icon--syncing" />
+              ) : (
+                <span className="queue-dot" />
+              )}
+
+              {queueCount} queued
+            </span>
           )}
         </OfflineBadge>
 
-        <HeaderUser>
-          {user?.name || user?.email || "User"}
-        </HeaderUser>
-      </HeaderRight>
-    </HeaderContainer>
+        <div className="header-user">
+          <div className="header-user-avatar">
+            <UserRound size={19} />
+          </div>
+
+          <div className="header-user-details">
+            <span className="header-user-name" title={displayName}>
+              {displayName}
+            </span>
+            <span className="header-user-label">Signed in</span>
+          </div>
+        </div>
+      </div>
+    </header>
   );
 }
 
 export default Header;
+

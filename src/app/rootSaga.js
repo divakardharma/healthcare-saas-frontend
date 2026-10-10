@@ -11,6 +11,8 @@ import staffSaga from "../modules/staff/staffSaga";
 import billingSaga from "../modules/billing/billingSaga";
 import notificationsSaga from "../modules/notifications/notificationsSaga";
 import chatSaga from "../modules/chat/chatSaga";
+import notesSaga from "../modules/notes/notesSaga";
+import medicineSaga from "../modules/medicines/medicineSaga";
 
 import offlineSaga from "../modules/offline/offlineSaga";
 
@@ -28,9 +30,8 @@ export default function* rootSaga() {
     billingSaga(),
     notificationsSaga(),
     chatSaga(),
-    /*
-     * Offline Queue
-     */
-    offlineSaga(),
+    notesSaga(),
+    medicineSaga(),
+    offlineSaga()
   ]);
 }

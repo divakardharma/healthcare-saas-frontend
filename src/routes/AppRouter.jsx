@@ -61,7 +61,7 @@ function AppRouter() {
               </Protected>
             }
           />
-         <Route
+<Route
   path="/prescriptions"
   element={
     <RoleBasedRoute allowedRoles={["Provider", "Pharmacist"]}>
@@ -104,10 +104,6 @@ function AppRouter() {
               </Protected>
             }
           />
-          <Route
-  path="/settings/change-password"
-  element={<ChangePassword />}
-/>
           <Route
             path="/settings"
             element={
@@ -161,6 +157,15 @@ function AppRouter() {
             element={
               <Protected>
                 <ChatPage />
+              </Protected>
+            }
+          />
+
+          <Route
+            path="/settings/change-password"
+            element={
+              <Protected>
+                <ChangePassword />
               </Protected>
             }
           />

@@ -16,6 +16,8 @@ import prescriptionReducer from "../modules/prescription/prescriptionSlice";
 import staffReducer from "../modules/staff/staffSlice";
 import billingReducer from "../modules/billing/billingSlice";
 import notificationsReducer from "../modules/notifications/notificationsSlice";
+import notesReducer from "../modules/notes/notesSlice";
+import medicineReducer from "../modules/medicines/medicineSlice";
 
 import offlineReducer from "../modules/offline/offlineSlice";
 
@@ -32,7 +34,10 @@ const rootReducer = combineReducers({
   billing: billingReducer,
   notifications: notificationsReducer,
   chat: chatReducer,
-  offline: offlineReducer,
+  notes: notesReducer,
+  medicines: medicineReducer,
+
+  offline: offlineReducer   // <-- ADD THIS (missing-a irundhuchu)
 });
 
 export default rootReducer;
