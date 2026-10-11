@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useTheme } from "styled-components";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import useStaff from "../../modules/staff/hooks/useStaff";
 
+
 const StaffPage = () => {
+  const theme = useTheme();
+
   const {
     staff,
     loading,
@@ -150,24 +154,24 @@ const StaffPage = () => {
           cursor: pointer;
         }
 
-        .role-select:focus,
-        .status-select:focus {
-          border-color: #2563eb;
-        }
+.role-select:focus,
+.status-select:focus {
+  border-color: var(--primary-color);
+}
 
-        .save-role-button {
-          border: none;
-          border-radius: 7px;
-          padding: 8px 12px;
-          background: #2563eb;
-          color: #ffffff;
-          font-size: 13px;
-          cursor: pointer;
-        }
+.save-role-button {
+  border: none;
+  border-radius: 7px;
+  padding: 8px 12px;
+  background: var(--primary-color);
+  color: #ffffff;
+  font-size: 13px;
+  cursor: pointer;
+}
 
-        .save-role-button:hover {
-          background: #1d4ed8;
-        }
+.save-role-button:hover {
+  background: var(--primary-hover);
+}
 
         .save-role-button:disabled {
           background: #9ca3af;
@@ -243,7 +247,13 @@ const StaffPage = () => {
         }
       `}</style>
 
-      <div className="staff-container">
+      <div
+  className="staff-container"
+  style={{
+    "--primary-color": theme.colors.primary,
+    "--primary-hover": theme.colors.primaryHover,
+  }}
+>
         <div className="staff-header">
           <div>
             <h1 className="staff-title">Staff Management</h1>

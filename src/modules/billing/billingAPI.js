@@ -59,12 +59,15 @@ export const updatePaymentStatus = async (billingId, status) => {
   return decryptData(response.data.payload);
 };
 
-export const getPatientsForBilling = async () => {
-  const response = await axiosClient.get("/patients");
+// Invoice form dropdowns (lightweight, not the paginated /patients and /appointments)
+export const getBillingPatientOptions = async () => {
+  const response = await axiosClient.get("/billing/patient-options");
   return decryptData(response.data.payload);
 };
 
-export const getAppointmentsForBilling = async () => {
-  const response = await axiosClient.get("/appointments");
+export const getBillingAppointmentOptions = async (patientId) => {
+  const response = await axiosClient.get("/billing/appointment-options", {
+    params: { patient_id: patientId }
+  });
   return decryptData(response.data.payload);
 };

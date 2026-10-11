@@ -19,6 +19,8 @@ import notificationsReducer from "../modules/notifications/notificationsSlice";
 import notesReducer from "../modules/notes/notesSlice";
 import medicineReducer from "../modules/medicines/medicineSlice";
 
+import offlineReducer from "../modules/offline/offlineSlice";
+
 const rootReducer = combineReducers({
   auth: authReducer,
   tenant: tenantReducer,
@@ -33,7 +35,9 @@ const rootReducer = combineReducers({
   notifications: notificationsReducer,
   chat: chatReducer,
   notes: notesReducer,
-  medicines: medicineReducer
+  medicines: medicineReducer,
+
+  offline: offlineReducer   // <-- ADD THIS (missing-a irundhuchu)
 });
 
 export default rootReducer;

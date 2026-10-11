@@ -96,6 +96,16 @@ axiosClient.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
+    try {
+  const encryptedPayload = error.response?.data?.payload;
+
+  if (encryptedPayload) {
+    const decryptedError = decryptData(encryptedPayload);
+    console.log("DECRYPTED API ERROR:", decryptedError);
+  }
+} catch (decryptError) {
+  console.error("API ERROR DECRYPT FAILED:", decryptError);
+}
 
     return Promise.reject(error);
   }

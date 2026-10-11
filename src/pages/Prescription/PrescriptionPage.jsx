@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTheme } from "styled-components";
 import { usePrescription } from "../../modules/prescription/hooks/usePrescription";
 import useAuth from "../../modules/auth/hooks/useAuth";
 import DashboardLayout from "../../components/layout/DashboardLayout";
@@ -20,6 +21,7 @@ const emptyForm = {
   provider_id: "",
   appointment_id: "",
   notes: "",
+  status: "Pending",
   items: [{ ...emptyMedicine }]
 };
 
@@ -48,6 +50,7 @@ const {
 } = useMedicines();
 
   const { user } = useAuth();
+  const theme = useTheme();
   const {
   batches,
   fetchAppointments
@@ -76,18 +79,19 @@ useEffect(() => {
   loadMedicines();
 }, []);
 
-  const resetForm = () => {
-    setFormData({
-      patient_id: "",
-      provider_id: "",
-      appointment_id: "",
-      notes: "",
-      items: [{ ...emptyMedicine }]
-    });
+const resetForm = () => {
+  setFormData({
+    patient_id: "",
+    provider_id: "",
+    appointment_id: "",
+    notes: "",
+    status: "Pending",
+    items: [{ ...emptyMedicine }]
+  });
 
-    setEditingId(null);
-    setShowForm(false);
-  };
+  setEditingId(null);
+  setShowForm(false);
+};
 
   const appointments = Object.values(batches || {})
   .flat()
@@ -180,6 +184,8 @@ const handleMedicineChange = (index, event) => {
         ? Number(formData.appointment_id)
         : null,
       notes: formData.notes,
+      status: editingId
+    ? formData.status : "Pending",
       items: formData.items.map((item) => ({
         medicine_id: Number(item.medicine_id),
         dosage: item.dosage,
@@ -197,9 +203,9 @@ const handleMedicineChange = (index, event) => {
 
     resetForm();
 
-    setTimeout(() => {
-      loadPrescriptions();
-    }, 500);
+    // setTimeout(() => {
+    //   loadPrescriptions();
+    // }, 500);
   };
 
   const handleEdit = (prescription) => {
@@ -254,9 +260,9 @@ quantity: item.quantity || ""
     ) {
       removePrescription(id);
 
-      setTimeout(() => {
-        loadPrescriptions();
-      }, 500);
+      // setTimeout(() => {
+      //   loadPrescriptions();
+      // }, 500);
     }
   };
 
@@ -269,14 +275,21 @@ quantity: item.quantity || ""
       status
     });
 
-    setTimeout(() => {
-      loadPrescriptions();
-    }, 500);
+    // setTimeout(() => {
+    //   loadPrescriptions();
+    // }, 500);
   };
 
   return (
     <DashboardLayout>
-      <div className="prescription-page">
+      <div
+  className="prescription-page"
+  style={{
+    "--primary-color": theme.colors.primary,
+    "--primary-hover": theme.colors.primaryHover,
+    "--primary-soft": `${theme.colors.primary}22`
+  }}
+>
         <style>{`
           .prescription-page {
             padding: 24px;
@@ -303,16 +316,20 @@ quantity: item.quantity || ""
             font-size: 14px;
           }
 
-          .add-button {
-            border: none;
-            border-radius: 8px;
-            padding: 11px 18px;
-            background: #2563eb;
-            color: #ffffff;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
+        .add-button {
+           border: none;
+           border-radius: 8px;
+           padding: 11px 18px;
+           background: var(--primary-color);
+           color: #ffffff;
+           cursor: pointer;
+           font-size: 14px;
+           font-weight: 600;
           }
+           .add-button:hover,
+.save-button:hover {
+  background: var(--primary-hover);
+}
 
           .prescription-card {
             background: #ffffff;
@@ -367,10 +384,10 @@ quantity: item.quantity || ""
             border-color: #2563eb;
           }
 
-          .form-textarea {
-            min-height: 90px;
-            resize: vertical;
-          }
+    .form-input:focus,
+.form-textarea:focus {
+  border-color: var(--primary-color);
+}
 
           .medicine-section {
             margin-top: 24px;
@@ -442,9 +459,9 @@ quantity: item.quantity || ""
           }
 
           .save-button {
-            background: #2563eb;
-            color: #ffffff;
-          }
+  background: var(--primary-color);
+  color: #ffffff;
+}
 
           .cancel-button {
             background: #e5e7eb;
@@ -499,10 +516,10 @@ quantity: item.quantity || ""
             font-weight: 600;
           }
 
-          .view-button {
-            background: #dbeafe;
-            color: #1d4ed8;
-          }
+       .view-button {
+  background: var(--primary-soft);
+  color: var(--primary-color);
+}
 
           .delete-button {
             background: #fee2e2;

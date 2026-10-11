@@ -15,6 +15,20 @@ const authSlice = createSlice({
   initialState,
 
   reducers: {
+    changePasswordRequest: (state) => {
+  state.loading = true;
+  state.error = null;
+},
+
+changePasswordSuccess: (state) => {
+  state.loading = false;
+  state.error = null;
+},
+
+changePasswordFailure: (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+},
     loginRequest: (state) => {
       state.loading = true;
       state.error = null;

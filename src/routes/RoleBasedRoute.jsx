@@ -16,10 +16,12 @@ function RoleBasedRoute({ children, allowedRoles = [] }) {
 
  const userRoles = user?.roles || [];
 
-if (!allowedRoles.some((role) => userRoles.includes(role))) {
+if (
+  allowedRoles.length > 0 &&
+  !allowedRoles.some((role) => userRoles.includes(role))
+) {
   return <Navigate to="/dashboard" replace />;
 }
-
   return children;
 }
 
