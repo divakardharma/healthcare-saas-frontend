@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
@@ -6,8 +5,8 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuth from "../../modules/auth/hooks/useAuth";
 import useBilling from "../../modules/billing/hooks/useBilling";
 import {
-  getPatientsForBilling,
-  getAppointmentsForBilling
+  getBillingPatientOptions,
+  getBillingAppointmentOptions
 } from "../../modules/billing/billingAPI";
 
 import "./BillingPage.css";
@@ -74,12 +73,14 @@ const BillingPage = () => {
 
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingBilling, setEditingBilling] = useState(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
 
   const {
     billing,
+    summary,
     loading,
     error,
     loadBilling,
@@ -99,42 +100,13 @@ const BillingPage = () => {
   const canManageBilling = isAdmin || isProvider;
   const canViewBilling = canManageBilling || isNurse;
 
-  // Calculate all invoice totals in one pass.
-  const calculatedSummary = useMemo(() => {
-    return billing.reduce(
-      (summary, invoice) => {
-        const amount = Number(invoice.amount) || 0;
-
-        summary.total_invoices += 1;
-        summary.total_amount += amount;
-
-        if (invoice.payment_status === "Paid") {
-          summary.paid_amount += amount;
-        } else if (invoice.payment_status === "Pending") {
-          summary.pending_amount += amount;
-        }
-
-        return summary;
-      },
-      {
-        total_invoices: 0,
-        total_amount: 0,
-        paid_amount: 0,
-        pending_amount: 0
-      }
-    );
-  }, [billing]);
-
-  // Create a patient ID-to-name lookup for the invoice table.
-  const patientNames = useMemo(() => {
-    const map = new Map();
-
-    patients.forEach((patient) => {
-      map.set(String(patient.id), getPatientName(patient));
-    });
-
-    return map;
-  }, [patients]);
+  // Totals are calculated by the backend (single aggregate query).
+  const billingSummary = summary || {
+    total_invoices: 0,
+    total_amount: 0,
+    paid_amount: 0,
+    pending_amount: 0
+  };
 
   const selectedPatient = useMemo(
     () =>
@@ -153,16 +125,6 @@ const BillingPage = () => {
     [appointments, formData.appointment_id]
   );
 
-  // Filter appointments only when appointments or patient selection changes.
-  const filteredAppointments = useMemo(
-    () =>
-      appointments.filter(
-        (appointment) =>
-          String(appointment.patient_id) === String(formData.patient_id)
-      ),
-    [appointments, formData.patient_id]
-  );
-
   useEffect(() => {
     if (!canViewBilling) return;
 
@@ -173,36 +135,65 @@ const BillingPage = () => {
 
     let cancelled = false;
 
-    const loadBillingOptions = async () => {
+    const loadPatients = async () => {
       try {
-        const [patientResponse, appointmentResponse] = await Promise.all([
-          getPatientsForBilling(),
-          getAppointmentsForBilling()
-        ]);
+        const response = await getBillingPatientOptions();
 
         if (cancelled) return;
 
-        setPatients(
-          Array.isArray(patientResponse.data) ? patientResponse.data : []
-        );
-        setAppointments(
-          Array.isArray(appointmentResponse.data)
-            ? appointmentResponse.data
-            : []
-        );
+        setPatients(Array.isArray(response.data) ? response.data : []);
       } catch (loadError) {
         if (!cancelled) {
-          console.error("Failed to load billing options", loadError);
+          console.error("Failed to load billing patients", loadError);
         }
       }
     };
 
-    loadBillingOptions();
+    loadPatients();
 
     return () => {
       cancelled = true;
     };
   }, [canViewBilling, canManageBilling]);
+
+  // Load appointments of the selected patient only.
+  useEffect(() => {
+    if (!canManageBilling) return;
+
+    if (!formData.patient_id) {
+      setAppointments([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadAppointments = async () => {
+      setAppointmentsLoading(true);
+
+      try {
+        const response = await getBillingAppointmentOptions(
+          formData.patient_id
+        );
+
+        if (cancelled) return;
+
+        setAppointments(Array.isArray(response.data) ? response.data : []);
+      } catch (loadError) {
+        if (!cancelled) {
+          setAppointments([]);
+          console.error("Failed to load billing appointments", loadError);
+        }
+      } finally {
+        if (!cancelled) setAppointmentsLoading(false);
+      }
+    };
+
+    loadAppointments();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canManageBilling, formData.patient_id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -233,7 +224,7 @@ const BillingPage = () => {
       !Number.isInteger(appointmentId) ||
       appointmentId <= 0 ||
       !Number.isFinite(amount) ||
-      amount < 0
+      amount <= 0
     ) {
       return;
     }
@@ -320,28 +311,28 @@ const BillingPage = () => {
           <div className="billing-card billing-card--primary">
             <span className="billing-card__label">Total Invoices</span>
             <strong className="billing-card__value">
-              {calculatedSummary.total_invoices}
+              {billingSummary.total_invoices}
             </strong>
           </div>
 
           <div className="billing-card">
             <span className="billing-card__label">Total Amount</span>
             <strong className="billing-card__value">
-              {formatMoney(calculatedSummary.total_amount)}
+              {formatMoney(billingSummary.total_amount)}
             </strong>
           </div>
 
           <div className="billing-card billing-card--success">
             <span className="billing-card__label">Paid Amount</span>
             <strong className="billing-card__value">
-              {formatMoney(calculatedSummary.paid_amount)}
+              {formatMoney(billingSummary.paid_amount)}
             </strong>
           </div>
 
           <div className="billing-card billing-card--warning">
             <span className="billing-card__label">Pending Amount</span>
             <strong className="billing-card__value">
-              {formatMoney(calculatedSummary.pending_amount)}
+              {formatMoney(billingSummary.pending_amount)}
             </strong>
           </div>
         </div>
@@ -401,15 +392,17 @@ const BillingPage = () => {
                     value={formData.appointment_id}
                     onChange={handleChange}
                     required
-                    disabled={!formData.patient_id}
+                    disabled={!formData.patient_id || appointmentsLoading}
                   >
                     <option value="">
-                      {formData.patient_id
+                      {appointmentsLoading
+                        ? "Loading appointments..."
+                        : formData.patient_id
                         ? "Select an appointment"
                         : "Select a patient first"}
                     </option>
 
-                    {filteredAppointments.map((appointment) => (
+                    {appointments.map((appointment) => (
                       <option key={appointment.id} value={appointment.id}>
                         {getAppointmentLabel(appointment)}
                       </option>
@@ -439,7 +432,7 @@ const BillingPage = () => {
                     value={formData.amount}
                     onChange={handleChange}
                     required
-                    min="0"
+                    min="0.01"
                     step="0.01"
                   />
                   <small className="billing-field-hint">
@@ -495,9 +488,7 @@ const BillingPage = () => {
 
                 <tbody>
                   {billing.map((invoice) => {
-                    const patientName = patientNames.get(
-                      String(invoice.patient_id)
-                    );
+                    const patientName = invoice.patient_name;
 
                     return (
                       <tr key={invoice.id}>

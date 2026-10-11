@@ -384,18 +384,12 @@ function* createPatient(
    * Never call the API.
    */
   if (!isOnline) {
-    const queued =
-      yield call(
-        enqueueOffline,
+    const queued =   yield call( enqueueOffline,
         {
-          type:
-            "CREATE_PATIENT",
-
-          payload:
-            data,
-
+          type:"CREATE_PATIENT",
+          payload: data,
           meta: {
-            displayName:
+              displayName:
               data?.full_name ||
               data?.name ||
               "New patient",
